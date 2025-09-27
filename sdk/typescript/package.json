@@ -1,0 +1,42 @@
+{
+  "name": "@algo-zk/oracle-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for ALGO ZK Price Oracle with Zero-Knowledge proof verification",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "algorand",
+    "price-oracle",
+    "zero-knowledge",
+    "zk-snark",
+    "machine-learning",
+    "prediction"
+  ],
+  "author": "ALGO ZK Oracle Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "snarkjs": "^0.7.0"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oguzhaangumuss/algo-price-predict"
+  }
+}

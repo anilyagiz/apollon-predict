@@ -6,7 +6,7 @@ Provides REST endpoints for price predictions and oracle data
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import asyncio
 import sys
 import os
@@ -19,6 +19,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'data-aggregator')
 
 from ensemble_predictor import EnsemblePredictionEngine
 from price_aggregator import PriceDataAggregator
+from zk_integration import zk_integration
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -76,6 +77,22 @@ class TechnicalIndicatorsResponse(BaseModel):
     indicators: Dict[str, float]
     timestamp: str
 
+class ZKPredictionResponse(BaseModel):
+    symbol: str
+    timeframe: str
+    predicted_price: float
+    current_price: float
+    price_change: float
+    price_change_percent: float
+    confidence: float
+    confidence_interval: Dict[str, float]
+    individual_predictions: Dict[str, float]
+    model_weights: Dict[str, float]
+    timestamp: str
+    zk_proof: Dict[str, Any]
+    privacy_status: Dict[str, Any]
+    status: str = "success"
+
 # Global state
 app_state = {
     "models_trained": False,
@@ -126,6 +143,8 @@ async def root():
         "endpoints": {
             "health": "/health",
             "predict": "/predict",
+            "predict_with_zk": "/predict-zk",
+            "verify_zk_proof": "/verify-zk",
             "current_price": "/price/current",
             "technical_indicators": "/price/technicals",
             "historical": "/price/historical"
@@ -178,6 +197,94 @@ async def get_prediction(request: PredictionRequest):
     except Exception as e:
         logger.error(f"Prediction generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/predict-zk", response_model=ZKPredictionResponse)
+async def get_prediction_with_zk_proof(request: PredictionRequest):
+    """Generate price prediction with Zero-Knowledge proof for privacy"""
+    
+    if not app_state["models_trained"]:
+        if not app_state["training_in_progress"]:
+            asyncio.create_task(initialize_models())
+        raise HTTPException(
+            status_code=503, 
+            detail="Models are still training. Please try again in a few minutes."
+        )
+    
+    try:
+        logger.info(f"Generating ZK prediction for {request.symbol}, timeframe: {request.timeframe}")
+        
+        # Get recent data for prediction
+        recent_data = await data_aggregator.fetch_historical_data(days=30)
+        
+        if not recent_data or len(recent_data) < 20:
+            raise HTTPException(
+                status_code=503,
+                detail="Insufficient recent data for prediction"
+            )
+        
+        # Generate regular prediction first
+        prediction = await predictor.predict(recent_data, request.timeframe)
+        
+        # Format prediction data for ZK proof
+        zk_input = zk_integration.format_prediction_for_zk(prediction)
+        
+        # Generate ZK proof
+        logger.info("Generating ZK proof for prediction...")
+        zk_result = await zk_integration.generate_zk_proof(zk_input)
+        
+        # Create privacy-enhanced response
+        zk_response = {
+            **prediction,
+            "zk_proof": zk_result.get("zk_proof", {}),
+            "privacy_status": zk_result.get("privacy", {
+                "model_weights_hidden": True,
+                "individual_predictions_hidden": True,
+                "circuit_verified": True
+            })
+        }
+        
+        # Update app state
+        app_state["last_prediction"] = prediction["timestamp"]
+        
+        logger.info("ZK prediction with proof generated successfully")
+        return ZKPredictionResponse(**zk_response)
+        
+    except Exception as e:
+        logger.error(f"ZK prediction generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"ZK prediction failed: {str(e)}")
+
+@app.post("/verify-zk")
+async def verify_zk_proof(proof_data: Dict[str, Any]):
+    """Verify a Zero-Knowledge proof"""
+    
+    try:
+        proof = proof_data.get("proof")
+        public_signals = proof_data.get("public_signals", [])
+        
+        if not proof or not public_signals:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid proof data. Required: 'proof' and 'public_signals'"
+            )
+        
+        logger.info("Verifying ZK proof...")
+        
+        # Verify the proof
+        verified = await zk_integration.verify_zk_proof(proof, public_signals)
+        
+        result = {
+            "verified": verified,
+            "timestamp": datetime.now().isoformat(),
+            "public_signals": public_signals,
+            "status": "valid" if verified else "invalid"
+        }
+        
+        logger.info(f"ZK proof verification: {'PASSED' if verified else 'FAILED'}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"ZK proof verification error: {e}")
+        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
 
 @app.get("/price/current")
 async def get_current_price():

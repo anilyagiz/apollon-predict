@@ -1,0 +1,20 @@
+{
+  "name": "algo-zk-oracle-sdk-test",
+  "version": "1.0.0",
+  "description": "Test suite for ALGO ZK Oracle TypeScript SDK",
+  "main": "test-sdk.js",
+  "scripts": {
+    "test": "node test-sdk.js",
+    "build": "tsc test-sdk.ts",
+    "test-ts": "ts-node test-sdk.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "snarkjs": "^0.7.0"
+  }
+}

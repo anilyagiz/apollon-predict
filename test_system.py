@@ -17,7 +17,7 @@ sys.path.append('backend/ml-engine')
 
 async def test_price_aggregator():
     """Test price data aggregator"""
-    print("🔍 Testing Price Data Aggregator...")
+    print("Testing Price Data Aggregator...")
     
     try:
         from price_aggregator import PriceDataAggregator
@@ -29,11 +29,11 @@ async def test_price_aggregator():
         current_data = await aggregator.get_aggregated_price()
         
         if current_data:
-            print(f"  ✅ Current ALGO price: ${current_data['aggregated_price']:.6f}")
-            print(f"  ✅ Confidence: {current_data['confidence']:.3f}")
-            print(f"  ✅ Sources: {current_data['source_count']}")
+            print(f"  Current ALGO price: ${current_data['aggregated_price']:.6f}")
+            print(f"  Confidence: {current_data['confidence']:.3f}")
+            print(f"  Sources: {current_data['source_count']}")
         else:
-            print("  ❌ Failed to fetch current price")
+            print("  Failed to fetch current price")
             return False
             
         # Test historical data
@@ -41,15 +41,15 @@ async def test_price_aggregator():
         historical = await aggregator.fetch_historical_data(days=7)
         
         if historical and len(historical) > 0:
-            print(f"  ✅ Historical data: {len(historical)} data points")
+            print(f"  Historical data: {len(historical)} data points")
         else:
-            print("  ❌ Failed to fetch historical data")
+            print("  Failed to fetch historical data")
             return False
             
         return True
         
     except Exception as e:
-        print(f"  ❌ Price aggregator test failed: {e}")
+        print(f"  Price aggregator test failed: {e}")
         return False
 
 def test_api_server():
@@ -65,10 +65,10 @@ def test_api_server():
         
         if response.status_code == 200:
             health_data = response.json()
-            print(f"  ✅ Health check: {health_data['status']}")
-            print(f"  ✅ Models trained: {health_data['models_trained']}")
+            print(f"  Health check: {health_data['status']}")
+            print(f"  Models trained: {health_data['models_trained']}")
         else:
-            print(f"  ❌ Health check failed: {response.status_code}")
+            print(f"  Health check failed: {response.status_code}")
             return False
             
         # Test current price endpoint
