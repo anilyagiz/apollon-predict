@@ -51,32 +51,32 @@ class SimpleAlgoClient {
 }
 
 async function testSDK() {
-  console.log('🧪 Testing TypeScript SDK (JavaScript)...');
+  console.log(' Testing TypeScript SDK (JavaScript)...');
   
   const client = new SimpleAlgoClient('http://localhost:8000');
   
   try {
     // Test 1: Health Check
-    console.log('✅ Test 1: Health Check');
+    console.log('  Test 1: Health Check');
     const health = await client.health();
     console.log(`   Status: ${health.status}, Models: ${health.models_trained}`);
     
     // Test 2: Current Price
-    console.log('\\n✅ Test 2: Current Price');
+    console.log('\\n  Test 2: Current Price');
     const price = await client.getCurrentPrice();
     console.log(`   Aggregated Price: $${price.aggregated_price.toFixed(6)}`);
     console.log(`   Confidence: ${(price.confidence * 100).toFixed(2)}%`);
     console.log(`   Sources: ${price.sources.map(s => s.source).join(', ')}`);
     
     // Test 3: Technical Indicators
-    console.log('\\n✅ Test 3: Technical Indicators');
+    console.log('\\n  Test 3: Technical Indicators');
     const tech = await client.getTechnicalIndicators();
     console.log(`   RSI: ${tech.indicators.rsi.toFixed(2)}`);
     console.log(`   SMA 7: ${tech.indicators.sma_7.toFixed(6)}`);
     console.log(`   Bollinger Upper: ${tech.indicators.bb_upper.toFixed(6)}`);
     
     // Test 4: Standard Prediction
-    console.log('\\n✅ Test 4: Standard Prediction');
+    console.log('\\n  Test 4: Standard Prediction');
     const prediction = await client.predict();
     console.log(`   Predicted Price: $${prediction.predicted_price.toFixed(6)}`);
     console.log(`   Current Price: $${prediction.current_price.toFixed(6)}`);
@@ -89,7 +89,7 @@ async function testSDK() {
     console.log(`     XGBoost: ${(prediction.model_weights.xgboost * 100).toFixed(1)}%`);
     
     // Test 5: ZK-Enhanced Prediction
-    console.log('\\n✅ Test 5: ZK-Enhanced Prediction');
+    console.log('\\n  Test 5: ZK-Enhanced Prediction');
     const startTime = Date.now();
     const zkPrediction = await client.predictWithZK();
     const endTime = Date.now();
@@ -105,10 +105,10 @@ async function testSDK() {
     console.log(`     Verified: ${zkPrediction.zk_proof.verified}`);
     console.log(`     Public Signals: [${zkPrediction.zk_proof.public_signals.join(', ')}]`);
     
-    console.log('\\n🎉 TypeScript SDK Test Completed Successfully!');
+    console.log('\\n  TypeScript SDK Test Completed Successfully!');
     
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error(' Error:', error.message);
     if (error.response) {
       console.error('   Status:', error.response.status);
       console.error('   Data:', error.response.data);
@@ -118,7 +118,7 @@ async function testSDK() {
 
 // Performance test
 async function performanceTest() {
-  console.log('\\n⚡ Performance Test...');
+  console.log('\\n Performance Test...');
   const client = new SimpleAlgoClient('http://localhost:8000');
   
   const tests = [
@@ -141,19 +141,19 @@ async function performanceTest() {
 }
 
 async function main() {
-  console.log('🚀 Starting ALGO ZK Oracle TypeScript SDK Tests');
+  console.log(' Starting ALGO ZK Oracle TypeScript SDK Tests');
   console.log('=' .repeat(60));
   
   await testSDK();
   await performanceTest();
   
   console.log('\\n' + '='.repeat(60));
-  console.log('📊 TypeScript SDK Test Summary:');
-  console.log('✅ HTTP Client: Axios-based requests working');
-  console.log('✅ API Integration: All endpoints accessible');
-  console.log('✅ ZK Privacy: Proof generation and verification');
-  console.log('✅ Type Safety: JavaScript runtime validation');
-  console.log('✅ Performance: Response times measured');
+  console.log(' TypeScript SDK Test Summary:');
+  console.log('  HTTP Client: Axios-based requests working');
+  console.log('  API Integration: All endpoints accessible');
+  console.log('  ZK Privacy: Proof generation and verification');
+  console.log('  Type Safety: JavaScript runtime validation');
+  console.log('  Performance: Response times measured');
 }
 
 if (require.main === module) {

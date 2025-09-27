@@ -24,7 +24,7 @@ from algo_zk_oracle import (
 
 async def test_async_sdk():
     """Test async SDK functionality"""
-    print("🧪 Testing Python Async SDK...")
+    print(" Testing Python Async SDK...")
     
     config = SDKConfig(
         base_url="http://localhost:8000",
@@ -36,7 +36,7 @@ async def test_async_sdk():
     async with AlgoZKOracleClient(config) as client:
         try:
             # Test 1: Health Check
-            print("✅ Test 1: Health Check")
+            print("  Test 1: Health Check")
             health = await client.health()
             print(f"   Status: {health.status}")
             print(f"   Models Trained: {health.models_trained}")
@@ -44,15 +44,15 @@ async def test_async_sdk():
             
             # Wait for models if needed
             if not health.models_trained:
-                print("⏳ Waiting for models to be ready...")
+                print(" Waiting for models to be ready...")
                 ready = await client.wait_for_models(60.0)
                 if not ready:
-                    print("❌ Models not ready within timeout")
+                    print(" Models not ready within timeout")
                     return
-                print("✅ Models are now ready")
+                print("  Models are now ready")
             
             # Test 2: Current Price
-            print("\n✅ Test 2: Current Price")
+            print("\n  Test 2: Current Price")
             current_price = await client.get_current_price()
             print(f"   Aggregated Price: ${current_price.aggregated_price:.6f}")
             print(f"   Confidence: {current_price.confidence:.2%}")
@@ -60,7 +60,7 @@ async def test_async_sdk():
             print(f"   Sources: {', '.join([s.source for s in current_price.sources])}")
             
             # Test 3: Technical Indicators
-            print("\n✅ Test 3: Technical Indicators")
+            print("\n  Test 3: Technical Indicators")
             technicals = await client.get_technical_indicators()
             print(f"   RSI: {technicals.indicators.rsi:.2f}")
             print(f"   SMA 7: {technicals.indicators.sma_7:.6f}")
@@ -69,14 +69,14 @@ async def test_async_sdk():
             print(f"   Bollinger Lower: {technicals.indicators.bb_lower:.6f}")
             
             # Test 4: Historical Data
-            print("\n✅ Test 4: Historical Data")
+            print("\n  Test 4: Historical Data")
             historical = await client.get_historical_data(days=7)
             print(f"   Data Points: {historical.data_points}")
             print(f"   Latest Price: ${historical.data[-1].price:.6f}")
             print(f"   Period: {historical.period_days} days")
             
             # Test 5: Standard Prediction
-            print("\n✅ Test 5: Standard Prediction")
+            print("\n  Test 5: Standard Prediction")
             prediction = await client.predict(PredictionRequest(
                 symbol="ALGOUSD",
                 timeframe="24h",
@@ -93,7 +93,7 @@ async def test_async_sdk():
             print(f"     XGBoost: ${prediction.individual_predictions.xgboost:.6f}")
             
             # Test 6: ZK-Enhanced Prediction
-            print("\n✅ Test 6: ZK-Enhanced Prediction")
+            print("\n  Test 6: ZK-Enhanced Prediction")
             start_time = datetime.now()
             zk_prediction = await client.predict_with_zk()
             end_time = datetime.now()
@@ -110,7 +110,7 @@ async def test_async_sdk():
             print(f"     Public Signals: {zk_prediction.zk_proof.public_signals}")
             
             # Test 7: ZK Proof Verification
-            print("\n✅ Test 7: Independent ZK Proof Verification")
+            print("\n  Test 7: Independent ZK Proof Verification")
             verified = await client.verify_zk_proof(
                 zk_prediction.zk_proof.proof,
                 zk_prediction.zk_proof.public_signals
@@ -118,25 +118,25 @@ async def test_async_sdk():
             print(f"   Independent Verification: {verified}")
             
             # Test 8: Model Status
-            print("\n✅ Test 8: Model Status")
+            print("\n  Test 8: Model Status")
             status = await client.get_model_status()
             print(f"   Models Trained: {status.models_trained}")
             print(f"   Training in Progress: {status.training_in_progress}")
             print(f"   Prediction History Count: {status.prediction_history_count}")
             
-            print("\n🎉 All async tests completed successfully!")
+            print("\n  All async tests completed successfully!")
             
         except AlgoZKOracleError as e:
-            print(f"❌ SDK Error [{e.code}]: {e.message}")
+            print(f" SDK Error [{e.code}]: {e.message}")
             if e.details:
                 print(f"   Details: {e.details}")
         except Exception as e:
-            print(f"❌ Unexpected Error: {e}")
+            print(f" Unexpected Error: {e}")
 
 
 def test_sync_sdk():
     """Test sync SDK functionality"""
-    print("\n🧪 Testing Python Sync SDK...")
+    print("\n Testing Python Sync SDK...")
     
     config = SDKConfig(base_url="http://localhost:8000")
     
@@ -155,17 +155,17 @@ config = SDKConfig(base_url="http://localhost:8000")
 client = AlgoZKOracleClientSync(config)
 
 try:
-    print("✅ Sync Test: Health Check")
+    print("  Sync Test: Health Check")
     health = client.health()
     print(f"   Status: {health.status}")
     
-    print("✅ Sync Test: Current Price") 
+    print("  Sync Test: Current Price") 
     price = client.get_current_price()
     print(f"   Aggregated Price: ${price.aggregated_price:.6f}")
     
-    print("🎉 Sync tests completed successfully!")
+    print("  Sync tests completed successfully!")
 except Exception as e:
-    print(f"❌ Sync Test Error: {e}")
+    print(f" Sync Test Error: {e}")
 finally:
     client.close()
 '''
@@ -180,12 +180,12 @@ finally:
         if result.stderr:
             print(f"Sync test stderr: {result.stderr}")
     except Exception as e:
-        print(f"❌ Failed to run sync test: {e}")
+        print(f" Failed to run sync test: {e}")
 
 
 async def main():
     """Main test function"""
-    print("🚀 Starting ALGO ZK Oracle Python SDK Tests")
+    print(" Starting ALGO ZK Oracle Python SDK Tests")
     print("=" * 60)
     
     # Test async SDK
@@ -195,12 +195,12 @@ async def main():
     test_sync_sdk()
     
     print("\n" + "=" * 60)
-    print("📊 Python SDK Test Summary:")
-    print("✅ Async Client: Full functionality tested")
-    print("✅ Sync Client: Basic functionality tested")
-    print("✅ ZK Privacy: Proof generation and verification")
-    print("✅ Error Handling: SDK error types")
-    print("✅ Type Safety: Pydantic models")
+    print(" Python SDK Test Summary:")
+    print("  Async Client: Full functionality tested")
+    print("  Sync Client: Basic functionality tested")
+    print("  ZK Privacy: Proof generation and verification")
+    print("  Error Handling: SDK error types")
+    print("  Type Safety: Pydantic models")
 
 
 if __name__ == "__main__":

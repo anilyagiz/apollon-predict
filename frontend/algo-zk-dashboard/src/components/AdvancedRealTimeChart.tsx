@@ -1,17 +1,29 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import dynamic from 'next/dynamic';
-import { TrendingUp, TrendingDown, Activity, Zap, Pause, Play, BarChart3 } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import dynamic from "next/dynamic";
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Zap,
+  Pause,
+  Play,
+  BarChart3,
+} from "lucide-react";
 
 // Dynamic import for ApexCharts (client-side only)
-const Chart = dynamic(() => import('react-apexcharts'), {
+const Chart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
-  loading: () => <div className="h-96 flex items-center justify-center text-gray-400">Loading chart...</div>
+  loading: () => (
+    <div className="h-96 flex items-center justify-center text-gray-400">
+      Loading chart...
+    </div>
+  ),
 });
 
 interface RealTimePriceData {
@@ -37,7 +49,7 @@ export default function AdvancedRealTimeChart() {
     volume24h: 0,
     volumeChange24h: 0,
     trades24h: 0,
-    marketCap: 0
+    marketCap: 0,
   });
   const [isLive, setIsLive] = useState(true);
   const [lastPrice, setLastPrice] = useState<number>(0);
@@ -46,27 +58,29 @@ export default function AdvancedRealTimeChart() {
   // Fetch real ALGO data from backend
   const fetchRealTimeData = useCallback(async () => {
     try {
-      console.log('Fetching real-time ALGO data from backend...');
-      
-      const response = await fetch('http://localhost:8000/price/current');
-      
+      console.log("Fetching real-time ALGO data from backend...");
+
+      const response = await fetch("http://localhost:8000/price/current");
+
       if (!response.ok) {
         throw new Error(`Backend aggregator error: ${response.status}`);
       }
-      
+
       const backendData = await response.json();
-      console.log('Backend data received:', backendData);
-      
-      if (!backendData || typeof backendData.aggregated_price !== 'number') {
-        throw new Error('No valid ALGO data received from aggregator');
+      console.log("Backend data received:", backendData);
+
+      if (!backendData || typeof backendData.aggregated_price !== "number") {
+        throw new Error("No valid ALGO data received from aggregator");
       }
 
       const currentPrice = backendData.aggregated_price;
       const change = currentPrice - lastPrice;
-      const changePercent = lastPrice > 0 ? ((change / lastPrice) * 100) : 0;
+      const changePercent = lastPrice > 0 ? (change / lastPrice) * 100 : 0;
 
       // Extract real volume from best source
-      const bestVolumeSource = backendData.sources?.find((s: { volume_24h: number }) => s.volume_24h > 0);
+      const bestVolumeSource = backendData.sources?.find(
+        (s: { volume_24h: number }) => s.volume_24h > 0
+      );
       const realVolume = bestVolumeSource?.volume_24h || 0;
       const realMarketCap = bestVolumeSource?.market_cap || 0;
       const realVolumeChange = bestVolumeSource?.change_24h || 0;
@@ -74,8 +88,9 @@ export default function AdvancedRealTimeChart() {
       setVolumeData({
         volume24h: realVolume,
         volumeChange24h: realVolumeChange,
-        trades24h: realVolume > 0 ? Math.floor(realVolume / (currentPrice * 100)) : 0,
-        marketCap: realMarketCap
+        trades24h:
+          realVolume > 0 ? Math.floor(realVolume / (currentPrice * 100)) : 0,
+        marketCap: realMarketCap,
       });
 
       const newDataPoint: RealTimePriceData = {
@@ -85,38 +100,37 @@ export default function AdvancedRealTimeChart() {
         change: change,
         changePercent: changePercent,
         sources: backendData.source_count || 1,
-        confidence: (backendData.confidence * 100) || 100
+        confidence: backendData.confidence * 100 || 100,
       };
 
-      setPriceHistory(prev => {
+      setPriceHistory((prev) => {
         const updated = [...prev, newDataPoint];
         return updated.slice(-360); // Keep last 1 hour of 10-second intervals
       });
-      
-      console.log('✅ Data point added:', {
+
+      console.log("  Data point added:", {
         price: currentPrice,
         volume: realVolume,
         sources: backendData.source_count,
-        dataPoints: priceHistory.length + 1
+        dataPoints: priceHistory.length + 1,
       });
 
       setLastPrice(currentPrice);
-
     } catch (error) {
-      console.error('Failed to fetch real ALGO data:', error);
-      
+      console.error("Failed to fetch real ALGO data:", error);
+
       // Add error data point to show connection issues
       const errorDataPoint: RealTimePriceData = {
         timestamp: Date.now(),
-        price: lastPrice || 0.2050,
+        price: lastPrice || 0.205,
         volume: volumeData.volume24h || 0,
         change: 0,
         changePercent: 0,
         sources: 0, // Indicates error state
-        confidence: 0 // Indicates error state
+        confidence: 0, // Indicates error state
       };
 
-      setPriceHistory(prev => {
+      setPriceHistory((prev) => {
         const updated = [...prev, errorDataPoint];
         return updated.slice(-360);
       });
@@ -155,50 +169,50 @@ export default function AdvancedRealTimeChart() {
   // ApexCharts configuration for crypto-style chart
   const chartOptions = {
     chart: {
-      type: 'area' as const,
+      type: "area" as const,
       height: 400,
-      background: 'transparent',
-      foreColor: '#9CA3AF',
+      background: "transparent",
+      foreColor: "#9CA3AF",
       toolbar: {
-        show: false
+        show: false,
       },
       zoom: {
-        enabled: false
+        enabled: false,
       },
       animations: {
         enabled: true,
-        easing: 'easeinout',
+        easing: "easeinout",
         speed: 500,
         animateGradually: {
           enabled: true,
-          delay: 150
-        }
-      }
+          delay: 150,
+        },
+      },
     },
     theme: {
-      mode: 'dark' as const
+      mode: "dark" as const,
     },
     grid: {
-      borderColor: '#374151',
+      borderColor: "#374151",
       strokeDashArray: 1,
       xaxis: {
         lines: {
-          show: true
-        }
+          show: true,
+        },
       },
       yaxis: {
         lines: {
-          show: true
-        }
-      }
+          show: true,
+        },
+      },
     },
     stroke: {
-      curve: 'smooth' as const,
+      curve: "smooth" as const,
       width: 2,
-      colors: [isPositive ? '#10B981' : '#EF4444']
+      colors: [isPositive ? "#10B981" : "#EF4444"],
     },
     fill: {
-      type: 'gradient',
+      type: "gradient",
       gradient: {
         shadeIntensity: 1,
         opacityFrom: 0.3,
@@ -207,70 +221,70 @@ export default function AdvancedRealTimeChart() {
         colorStops: [
           {
             offset: 0,
-            color: isPositive ? '#10B981' : '#EF4444',
-            opacity: 0.3
+            color: isPositive ? "#10B981" : "#EF4444",
+            opacity: 0.3,
           },
           {
             offset: 100,
-            color: isPositive ? '#10B981' : '#EF4444',
-            opacity: 0.1
-          }
-        ]
-      }
+            color: isPositive ? "#10B981" : "#EF4444",
+            opacity: 0.1,
+          },
+        ],
+      },
     },
     dataLabels: {
-      enabled: false
+      enabled: false,
     },
     markers: {
       size: 0,
       hover: {
         size: 4,
-        sizeOffset: 2
-      }
+        sizeOffset: 2,
+      },
     },
     xaxis: {
-      type: 'datetime',
+      type: "datetime",
       labels: {
-        format: 'HH:mm:ss',
+        format: "HH:mm:ss",
         style: {
-          colors: '#9CA3AF',
-          fontSize: '10px'
-        }
+          colors: "#9CA3AF",
+          fontSize: "10px",
+        },
       },
       axisBorder: {
-        show: false
+        show: false,
       },
       axisTicks: {
-        show: false
-      }
+        show: false,
+      },
     },
     yaxis: {
       labels: {
         formatter: (value: number) => formatPrice(value),
         style: {
-          colors: '#9CA3AF',
-          fontSize: '10px'
-        }
+          colors: "#9CA3AF",
+          fontSize: "10px",
+        },
       },
       min: (min: number) => min * 0.999,
-      max: (max: number) => max * 1.001
+      max: (max: number) => max * 1.001,
     },
     tooltip: {
-      theme: 'dark',
+      theme: "dark",
       style: {
-        backgroundColor: '#1F2937',
-        color: '#F9FAFB'
+        backgroundColor: "#1F2937",
+        color: "#F9FAFB",
       },
       x: {
-        format: 'HH:mm:ss'
+        format: "HH:mm:ss",
       },
       y: {
-        formatter: (value: number) => formatPrice(value)
+        formatter: (value: number) => formatPrice(value),
       },
-      custom: function({ series, seriesIndex, dataPointIndex, w }: any) {
+      custom: function ({ series, seriesIndex, dataPointIndex, w }: any) {
         const data = priceHistory[dataPointIndex];
-        if (!data) return '';
-        
+        if (!data) return "";
+
         return `
           <div class="bg-gray-800 p-3 rounded-lg border border-gray-600">
             <div class="text-white font-semibold mb-2">ALGO Price</div>
@@ -279,24 +293,28 @@ export default function AdvancedRealTimeChart() {
               Volume: ${formatVolume(data.volume)}
             </div>
             <div class="text-sm text-gray-300">
-              Sources: ${data.sources} | Confidence: ${data.confidence.toFixed(1)}%
+              Sources: ${data.sources} | Confidence: ${data.confidence.toFixed(
+          1
+        )}%
             </div>
           </div>
         `;
-      }
+      },
     },
     legend: {
-      show: false
-    }
+      show: false,
+    },
   };
 
-  const series = [{
-    name: 'ALGO Price',
-    data: priceHistory.map(point => ({
-      x: point.timestamp,
-      y: point.price
-    }))
-  }];
+  const series = [
+    {
+      name: "ALGO Price",
+      data: priceHistory.map((point) => ({
+        x: point.timestamp,
+        y: point.price,
+      })),
+    },
+  ];
 
   return (
     <Card className="bg-white/5 backdrop-blur-lg border-white/10">
@@ -305,25 +323,34 @@ export default function AdvancedRealTimeChart() {
           <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
             <Activity className="w-6 h-6 text-green-400" />
             Advanced Real-Time ALGO Chart
-            <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+            <Badge
+              variant="secondary"
+              className="bg-green-500/20 text-green-300 border-green-500/30"
+            >
               LIVE
             </Badge>
           </CardTitle>
-          <p className="text-gray-400 mt-1">Professional trading view • 10-second precision • ApexCharts</p>
+          <p className="text-gray-400 mt-1">
+            Professional trading view • 10-second precision • ApexCharts
+          </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Button 
+          <Button
             onClick={() => setIsLive(!isLive)}
             variant={isLive ? "destructive" : "default"}
             size="sm"
             className="flex items-center gap-2"
           >
-            {isLive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            {isLive ? 'Pause' : 'Resume'}
+            {isLive ? (
+              <Pause className="w-4 h-4" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+            {isLive ? "Pause" : "Resume"}
           </Button>
-          
-          <Button 
+
+          <Button
             onClick={fetchRealTimeData}
             variant="outline"
             size="sm"
@@ -353,22 +380,34 @@ export default function AdvancedRealTimeChart() {
                 ) : (
                   <TrendingDown className="w-3 h-3 text-red-400" />
                 )}
-                <span className={`text-xs ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                  {isPositive ? '+' : ''}{currentData.changePercent.toFixed(4)}%
+                <span
+                  className={`text-xs ${
+                    isPositive ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {isPositive ? "+" : ""}
+                  {currentData.changePercent.toFixed(4)}%
                 </span>
               </div>
             </div>
-            
+
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">24h Volume</div>
               <div className="text-xl font-bold text-blue-400">
                 {formatVolume(volumeData.volume24h)}
               </div>
-              <div className={`text-xs mt-1 ${volumeData.volumeChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {volumeData.volumeChange24h >= 0 ? '+' : ''}{volumeData.volumeChange24h.toFixed(2)}%
+              <div
+                className={`text-xs mt-1 ${
+                  volumeData.volumeChange24h >= 0
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
+                {volumeData.volumeChange24h >= 0 ? "+" : ""}
+                {volumeData.volumeChange24h.toFixed(2)}%
               </div>
             </div>
-            
+
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Market Cap</div>
               <div className="text-xl font-bold text-purple-400">
@@ -378,16 +417,16 @@ export default function AdvancedRealTimeChart() {
                 {volumeData.trades24h.toLocaleString()} trades
               </div>
             </div>
-            
+
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Data Quality</div>
               <div className="text-xl font-bold text-green-400">
                 {currentData.confidence.toFixed(2)}%
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                {typeof currentData.sources === 'object' ? 
-                  `${Object.keys(currentData.sources).length} sources` : 
-                  `${currentData.sources || 3} sources`}
+                {typeof currentData.sources === "object"
+                  ? `${Object.keys(currentData.sources).length} sources`
+                  : `${currentData.sources || 3} sources`}
               </div>
             </div>
           </motion.div>
@@ -417,10 +456,14 @@ export default function AdvancedRealTimeChart() {
         {/* Data Points Info */}
         <div className="flex items-center justify-between text-sm text-gray-400">
           <div>
-            Updates every 10 seconds • {priceHistory.length} data points collected • ApexCharts powered
+            Updates every 10 seconds • {priceHistory.length} data points
+            collected • ApexCharts powered
           </div>
           <div>
-            Last update: {currentData ? new Date(currentData.timestamp).toLocaleTimeString() : 'N/A'}
+            Last update:{" "}
+            {currentData
+              ? new Date(currentData.timestamp).toLocaleTimeString()
+              : "N/A"}
           </div>
         </div>
       </CardContent>

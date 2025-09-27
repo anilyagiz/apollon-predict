@@ -2,9 +2,10 @@
 
 A privacy-enhanced price prediction oracle for Algorand blockchain using Zero-Knowledge proofs and ensemble machine learning models.
 
-## 🎯 Project Overview
+## Project Overview
 
 This project implements a sophisticated price prediction oracle that combines:
+
 - **Ensemble ML Models**: LSTM, GRU, Prophet, and XGBoost for robust predictions
 - **Multi-Source Data**: CoinGecko, CoinMarketCap, and on-chain data aggregation
 - **Zero-Knowledge Privacy**: Future implementation with snarkjs and TEE
@@ -29,7 +30,7 @@ ALGO-ZK-ORACLE/
 └── tests/
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -40,6 +41,7 @@ ALGO-ZK-ORACLE/
 ### Installation
 
 1. **Clone and setup:**
+
 ```bash
 cd ALGO
 cp .env.example .env
@@ -47,6 +49,7 @@ cp .env.example .env
 ```
 
 2. **Install backend dependencies:**
+
 ```bash
 # Oracle core (Node.js)
 cd backend/oracle-core
@@ -66,6 +69,7 @@ pip install -r requirements.txt
 ```
 
 3. **Start the API server:**
+
 ```bash
 cd backend/api
 python server.py
@@ -85,11 +89,13 @@ The API will be available at `http://localhost:8000`
 ### Example Usage
 
 **Get current price:**
+
 ```bash
 curl http://localhost:8000/price/current
 ```
 
 **Generate 24h prediction:**
+
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
@@ -97,6 +103,7 @@ curl -X POST http://localhost:8000/predict \
 ```
 
 **Response:**
+
 ```json
 {
   "symbol": "ALGOUSD",
@@ -131,16 +138,19 @@ curl -X POST http://localhost:8000/predict \
 ### Ensemble Components
 
 1. **LSTM (Long Short-Term Memory)**
+
    - Weight: 35%
    - Best for: Sequential price patterns
    - Features: Price lags, moving averages, RSI
 
 2. **GRU (Gated Recurrent Unit)**
+
    - Weight: 25%
    - Best for: Faster training, similar to LSTM
    - Features: Price changes, volatility
 
 3. **Prophet (Facebook's time series)**
+
    - Weight: 25%
    - Best for: Trend and seasonality
    - Features: Time-based patterns
@@ -158,7 +168,7 @@ Models are automatically trained on startup using 90 days of historical data. Re
 curl -X POST http://localhost:8000/models/retrain
 ```
 
-## 📊 Data Sources
+## Data Sources
 
 ### Free APIs Used
 
@@ -177,20 +187,22 @@ curl -X POST http://localhost:8000/models/retrain
 ## 🔒 Zero-Knowledge Implementation (Planned)
 
 Future ZK features:
+
 - Model privacy preservation
 - Prediction verification without revealing internals
 - TEE (Trusted Execution Environment) integration
 - Circom circuits for proof generation
 
-## 📈 Performance Metrics
+## Performance Metrics
 
 Current ensemble performance targets:
+
 - **Accuracy**: >70% for 24h predictions
 - **Response Time**: <500ms
 - **Uptime**: >99.5%
 - **Confidence Threshold**: >0.6 for production use
 
-## 🛠️ Development
+## Development
 
 ### Running Tests
 
@@ -210,11 +222,12 @@ npm test
 - **Copy-Paste Friendly**: Built from proven existing codebases
 - **Extensible**: Easy to add new models or data sources
 
-## 📋 Roadmap
+## Roadmap
 
 See [docs/MDs/ROADMAP.md](docs/MDs/ROADMAP.md) for detailed 8-week implementation plan.
 
-### Phase 1 ✅ (Completed)
+### Phase 1 (Completed)
+
 - [x] Project structure
 - [x] Base oracle code integration
 - [x] ML models implementation
@@ -222,6 +235,7 @@ See [docs/MDs/ROADMAP.md](docs/MDs/ROADMAP.md) for detailed 8-week implementatio
 - [x] REST API
 
 ### Phase 2 (Next)
+
 - [ ] Frontend dashboard
 - [ ] ZK circuit implementation
 - [ ] TEE integration
@@ -248,4 +262,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Status**: Phase 1 Complete - Working price prediction oracle with ensemble ML models ✅
+**Status**: Phase 1 Complete - Working price prediction oracle with ensemble ML models

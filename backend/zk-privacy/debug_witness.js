@@ -26,11 +26,11 @@ const witness = {
     xgboost_prediction: Math.round(testPrediction.xgboost_prediction * 1000)
 };
 
-console.log("🔍 Debug Witness Calculation:");
+console.log(" Debug Witness Calculation:");
 console.log("predicted_price:", witness.predicted_price);
 console.log("");
 
-console.log("📊 Individual Contributions:");
+console.log(" Individual Contributions:");
 const lstm_contrib = witness.lstm_prediction * witness.lstm_weight;
 const gru_contrib = witness.gru_prediction * witness.gru_weight;
 const prophet_contrib = witness.prophet_prediction * witness.prophet_weight;
@@ -53,7 +53,7 @@ console.log("weighted_sum =", weighted_sum);
 console.log("Equal?", witness.predicted_price * 1000000 === weighted_sum);
 
 console.log("");
-console.log("🔧 Expected ensemble calculation:");
+console.log("  Expected ensemble calculation:");
 const manual_ensemble = (
     witness.lstm_prediction * witness.lstm_weight +
     witness.gru_prediction * witness.gru_weight +
@@ -66,14 +66,14 @@ console.log("Original ensemble * 1000:", testPrediction.ensemble_prediction * 10
 console.log("Witness predicted_price:", witness.predicted_price);
 
 console.log("");
-console.log("💡 Issue Analysis:");
+console.log(" Issue Analysis:");
 if (witness.predicted_price * 1000000 !== weighted_sum) {
-    console.log("❌ Circuit assertion will FAIL");
+    console.log(" Circuit assertion will FAIL");
     console.log("Difference:", Math.abs(witness.predicted_price * 1000000 - weighted_sum));
     
     // Calculate what predicted_price should be
     const correct_predicted_price = Math.round(weighted_sum / 1000000);
     console.log("Correct predicted_price should be:", correct_predicted_price);
 } else {
-    console.log("✅ Circuit assertion will PASS");
+    console.log("  Circuit assertion will PASS");
 }

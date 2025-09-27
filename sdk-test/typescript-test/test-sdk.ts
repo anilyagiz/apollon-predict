@@ -21,7 +21,7 @@ import {
 } from '../../sdk/typescript/src';
 
 async function testTypeScriptSDK(): Promise<void> {
-  console.log('🧪 Testing TypeScript SDK...');
+  console.log(' Testing TypeScript SDK...');
   
   const config: SDKConfig = {
     baseURL: 'http://localhost:8000',
@@ -34,7 +34,7 @@ async function testTypeScriptSDK(): Promise<void> {
   
   try {
     // Test 1: Health Check
-    console.log('✅ Test 1: Health Check');
+    console.log('  Test 1: Health Check');
     const health = await client.health();
     console.log(`   Status: ${health.status}`);
     console.log(`   Models Trained: ${health.models_trained}`);
@@ -42,38 +42,38 @@ async function testTypeScriptSDK(): Promise<void> {
     
     // Wait for models if needed
     if (!health.models_trained) {
-      console.log('⏳ Waiting for models to be ready...');
+      console.log(' Waiting for models to be ready...');
       const ready = await client.waitForModels(60000);
       if (!ready) {
-        console.log('❌ Models not ready within timeout');
+        console.log(' Models not ready within timeout');
         return;
       }
-      console.log('✅ Models are now ready');
+      console.log('  Models are now ready');
     }
     
     // Test 2: Current Price
-    console.log('\\n✅ Test 2: Current Price');
+    console.log('\\n  Test 2: Current Price');
     const currentPrice = await client.getCurrentPrice();
     console.log(`   Price: $${currentPrice.price.toFixed(6)}`);
     console.log(`   Confidence: ${(currentPrice.confidence * 100).toFixed(2)}%`);
     console.log(`   Sources: ${currentPrice.sources.join(', ')}`);
     
     // Test 3: Technical Indicators
-    console.log('\\n✅ Test 3: Technical Indicators');
+    console.log('\\n  Test 3: Technical Indicators');
     const technicals = await client.getTechnicalIndicators();
     console.log(`   RSI: ${technicals.indicators.rsi.toFixed(2)}`);
     console.log(`   Volatility: ${technicals.indicators.volatility.toFixed(4)}`);
     console.log(`   SMA 20: ${technicals.indicators.sma_20.toFixed(6)}`);
     
     // Test 4: Historical Data
-    console.log('\\n✅ Test 4: Historical Data');
+    console.log('\\n  Test 4: Historical Data');
     const historical = await client.getHistoricalData(7);
     console.log(`   Data Points: ${historical.data_points}`);
     console.log(`   Latest Price: $${historical.data[historical.data.length - 1].price.toFixed(6)}`);
     console.log(`   Period: ${historical.period_days} days`);
     
     // Test 5: Standard Prediction
-    console.log('\\n✅ Test 5: Standard Prediction');
+    console.log('\\n  Test 5: Standard Prediction');
     const prediction = await client.predict({
       symbol: 'ALGOUSD',
       timeframe: '24h',
@@ -91,7 +91,7 @@ async function testTypeScriptSDK(): Promise<void> {
     console.log(`     XGBoost: $${prediction.individual_predictions.xgboost.toFixed(6)}`);
     
     // Test 6: ZK-Enhanced Prediction
-    console.log('\\n✅ Test 6: ZK-Enhanced Prediction');
+    console.log('\\n  Test 6: ZK-Enhanced Prediction');
     const startTime = Date.now();
     const zkPrediction = await client.predictWithZK();
     const endTime = Date.now();
@@ -108,7 +108,7 @@ async function testTypeScriptSDK(): Promise<void> {
     console.log(`     Public Signals: ${zkPrediction.zk_proof.public_signals}`);
     
     // Test 7: ZK Proof Verification
-    console.log('\\n✅ Test 7: Independent ZK Proof Verification');
+    console.log('\\n  Test 7: Independent ZK Proof Verification');
     const verified = await client.verifyZKProof(
       zkPrediction.zk_proof.proof,
       zkPrediction.zk_proof.public_signals
@@ -116,14 +116,14 @@ async function testTypeScriptSDK(): Promise<void> {
     console.log(`   Independent Verification: ${verified}`);
     
     // Test 8: Model Status
-    console.log('\\n✅ Test 8: Model Status');
+    console.log('\\n  Test 8: Model Status');
     const status = await client.getModelStatus();
     console.log(`   Models Trained: ${status.models_trained}`);
     console.log(`   Training in Progress: ${status.training_in_progress}`);
     console.log(`   Prediction History Count: ${status.prediction_history_count}`);
     
     // Test 9: Error Handling
-    console.log('\\n✅ Test 9: Error Handling');
+    console.log('\\n  Test 9: Error Handling');
     try {
       // Try to get historical data with invalid parameter
       await client.getHistoricalData(500); // Should fail (max 365)
@@ -136,28 +136,28 @@ async function testTypeScriptSDK(): Promise<void> {
     }
     
     // Test 10: Retry Logic
-    console.log('\\n✅ Test 10: Retry Logic');
+    console.log('\\n  Test 10: Retry Logic');
     const retryResult = await withRetry(
       () => client.getCurrentPrice(),
       { maxAttempts: 2, delay: 500 }
     );
     console.log(`   Retry Success: $${retryResult.price.toFixed(6)}`);
     
-    console.log('\\n🎉 All TypeScript tests completed successfully!');
+    console.log('\\n  All TypeScript tests completed successfully!');
     
   } catch (error) {
     if (error instanceof AlgoZKOracleError) {
-      console.log(`❌ SDK Error [${error.code}]: ${error.message}`);
+      console.log(` SDK Error [${error.code}]: ${error.message}`);
     } else if (error instanceof Error) {
-      console.log(`❌ Unexpected Error: ${error.message}`);
+      console.log(` Unexpected Error: ${error.message}`);
     } else {
-      console.log(`❌ Unknown Error: ${error}`);
+      console.log(` Unknown Error: ${error}`);
     }
   }
 }
 
 async function testErrorScenarios(): Promise<void> {
-  console.log('\\n🧪 Testing Error Scenarios...');
+  console.log('\\n Testing Error Scenarios...');
   
   // Test with invalid URL
   const invalidClient = new AlgoZKOracleClient({
@@ -168,18 +168,18 @@ async function testErrorScenarios(): Promise<void> {
   
   try {
     await invalidClient.health();
-    console.log('❌ Expected network error but request succeeded');
+    console.log(' Expected network error but request succeeded');
   } catch (error) {
     if (error instanceof NetworkError) {
-      console.log('✅ Network error properly caught and classified');
+      console.log('  Network error properly caught and classified');
     } else {
-      console.log(`✅ Error caught: ${error}`);
+      console.log(`  Error caught: ${error}`);
     }
   }
 }
 
 async function main(): Promise<void> {
-  console.log('🚀 Starting ALGO ZK Oracle TypeScript SDK Tests');
+  console.log(' Starting ALGO ZK Oracle TypeScript SDK Tests');
   console.log('=' .repeat(60));
   
   // Test main SDK functionality
@@ -189,12 +189,12 @@ async function main(): Promise<void> {
   await testErrorScenarios();
   
   console.log('\\n' + '='.repeat(60));
-  console.log('📊 TypeScript SDK Test Summary:');
-  console.log('✅ Type Safety: Full TypeScript support');
-  console.log('✅ HTTP Client: Axios with interceptors');
-  console.log('✅ ZK Privacy: Proof generation and verification');
-  console.log('✅ Error Handling: Comprehensive error types');
-  console.log('✅ Retry Logic: Configurable retry behavior');
+  console.log(' TypeScript SDK Test Summary:');
+  console.log('  Type Safety: Full TypeScript support');
+  console.log('  HTTP Client: Axios with interceptors');
+  console.log('  ZK Privacy: Proof generation and verification');
+  console.log('  Error Handling: Comprehensive error types');
+  console.log('  Retry Logic: Configurable retry behavior');
 }
 
 // Run tests

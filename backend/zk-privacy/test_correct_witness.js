@@ -22,7 +22,7 @@ const weighted_sum =
     predictions.prophet_prediction * weights.prophet_weight +
     predictions.xgboost_prediction * weights.xgboost_weight;
 
-console.log("🔍 Correct Witness Calculation:");
+console.log(" Correct Witness Calculation:");
 console.log("weighted_sum:", weighted_sum);
 
 // For circuit: weighted_sum === predicted_price * 1000
@@ -34,7 +34,7 @@ console.log("predicted_price * 1000:", predicted_price * 1000);
 console.log("Circuit equation valid:", weighted_sum === predicted_price * 1000);
 
 console.log("");
-console.log("✅ Correct witness values:");
+console.log("  Correct witness values:");
 console.log("predicted_price:", predicted_price);
 console.log("All other values stay the same");
 
@@ -46,5 +46,5 @@ const correctWitness = {
 };
 
 console.log("");
-console.log("🧪 Final witness object:");
+console.log(" Final witness object:");
 console.log(JSON.stringify(correctWitness, null, 2));

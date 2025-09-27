@@ -117,7 +117,7 @@ export default function RealTimePriceChart() {
         return updated.slice(-360);
       });
 
-      console.log("✅ Data point added:", {
+      console.log("  Data point added:", {
         price: currentPrice,
         volume: realVolume,
         sources: backendData.source_count,
