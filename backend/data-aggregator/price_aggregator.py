@@ -1,5 +1,5 @@
 """
-Price Data Aggregator for ALGO ZK Oracle
+Price Data Aggregator for Apollon - ZK Oracle Oracle
 Fetches price data from multiple sources: CoinGecko, CoinMarketCap
 """
 

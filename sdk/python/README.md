@@ -1,6 +1,6 @@
-# ALGO ZK Oracle Python SDK
+# Apollon - ZK Oracle Oracle Python SDK
 
-Python SDK for the ALGO ZK Price Oracle system with Zero-Knowledge proof verification.
+Python SDK for the Apollon - ZK Oracle Price Oracle system with Zero-Knowledge proof verification.
 
 ## Installation
 
@@ -23,11 +23,11 @@ async def main():
         retries=3,
         enable_zk_verification=True,
     )
-    
+
     async with AlgoZKOracleClient(config) as client:
         # Generate ZK-enhanced prediction
         prediction = await client.predict_with_zk()
-        
+
         print(f"Predicted price: ${prediction.predicted_price:.6f}")
         print(f"Confidence: {prediction.confidence:.2%}")
         print(f"Model weights hidden: {prediction.privacy_status.model_weights_hidden}")
@@ -49,11 +49,11 @@ try:
     # Check health
     health = client.health()
     print(f"API Status: {health.status}")
-    
+
     # Generate prediction
     prediction = client.predict()
     print(f"Predicted price: ${prediction.predicted_price:.6f}")
-    
+
 finally:
     client.close()
 ```
@@ -70,7 +70,7 @@ finally:
 
 ### AlgoZKOracleClient (Async)
 
-Main async client class for interacting with the ALGO ZK Oracle API.
+Main async client class for interacting with the Apollon - ZK Oracle Oracle API.
 
 #### Usage as Context Manager
 
@@ -218,28 +218,28 @@ from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
 
 async def monitor_price():
     config = SDKConfig(base_url="http://localhost:8000")
-    
+
     async with AlgoZKOracleClient(config) as client:
         # Wait for models
         await client.wait_for_models()
-        
+
         while True:
             try:
                 # Get current price
                 current = await client.get_current_price()
                 print(f"Current: ${current.price:.6f} ({current.confidence:.1%})")
-                
+
                 # Get prediction
                 prediction = await client.predict()
                 change = prediction.price_change_percent
                 direction = "↑" if change > 0 else "↓"
-                
+
                 print(f"24h Prediction: ${prediction.predicted_price:.6f} {direction}{abs(change):.2f}%")
                 print(f"Confidence: {prediction.confidence:.1%}")
                 print("-" * 50)
-                
+
                 await asyncio.sleep(60)  # Check every minute
-                
+
             except Exception as e:
                 print(f"Error: {e}")
                 await asyncio.sleep(10)
@@ -252,17 +252,17 @@ asyncio.run(monitor_price())
 ```python
 async def analyze_zk_privacy():
     config = SDKConfig(base_url="http://localhost:8000")
-    
+
     async with AlgoZKOracleClient(config) as client:
         # Generate both standard and ZK predictions
         standard = await client.predict()
         zk_enhanced = await client.predict_with_zk()
-        
+
         print("Standard Prediction:")
         print(f"  Predicted Price: ${standard.predicted_price:.6f}")
         print(f"  Model Weights Visible: {standard.model_weights}")
         print(f"  Individual Predictions: {standard.individual_predictions}")
-        
+
         print("\\nZK-Enhanced Prediction:")
         print(f"  Predicted Price: ${zk_enhanced.predicted_price:.6f}")
         print(f"  Model Weights Hidden: {zk_enhanced.privacy_status.model_weights_hidden}")
@@ -278,7 +278,7 @@ from algo_zk_oracle.utils.retry import retry_async_func, RetryConfig
 
 async def robust_prediction():
     config = SDKConfig(base_url="http://localhost:8000")
-    
+
     # Custom retry configuration
     retry_config = RetryConfig(
         max_attempts=5,
@@ -286,14 +286,14 @@ async def robust_prediction():
         backoff_factor=2.0,
         max_delay=30.0,
     )
-    
+
     async with AlgoZKOracleClient(config) as client:
         # Use manual retry for specific operations
         prediction = await retry_async_func(
             client.predict_with_zk,
             retry_config
         )
-        
+
         print(f"Prediction successful: ${prediction.predicted_price:.6f}")
 ```
 
@@ -302,7 +302,7 @@ async def robust_prediction():
 ```python
 async def batch_analysis():
     config = SDKConfig(base_url="http://localhost:8000")
-    
+
     async with AlgoZKOracleClient(config) as client:
         # Gather multiple data points
         health, current_price, technicals, historical = await asyncio.gather(
@@ -311,12 +311,12 @@ async def batch_analysis():
             client.get_technical_indicators(),
             client.get_historical_data(days=7),
         )
-        
+
         print(f"System Health: {health.status}")
         print(f"Current Price: ${current_price.price:.6f}")
         print(f"RSI: {technicals.indicators.rsi:.2f}")
         print(f"7-day data points: {len(historical.data)}")
-        
+
         # Generate prediction with all context
         prediction = await client.predict_with_zk()
         print(f"ZK Prediction: ${prediction.predicted_price:.6f}")

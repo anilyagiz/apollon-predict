@@ -4,11 +4,11 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="algo-zk-oracle-sdk",
+    name="Apollon - ZK Oracle-sdk",
     version="1.0.0",
-    author="ALGO ZK Oracle Team",
-    author_email="contact@algo-zk-oracle.com",
-    description="Python SDK for ALGO ZK Price Oracle with Zero-Knowledge proof verification",
+    author="Apollon - ZK Oracle Team",
+    author_email="contact@Apollon - ZK Oracle-oracle.com",
+    description="Python SDK for Apollon - ZK Oracle Price Oracle with Zero-Knowledge proof verification",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/oguzhaangumuss/algo-price-predict",

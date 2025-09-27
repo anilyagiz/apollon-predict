@@ -1,5 +1,5 @@
 """
-Type definitions for ALGO ZK Price Oracle SDK
+Type definitions for Apollon - ZK Oracle Price Oracle SDK
 """
 
 from typing import Dict, List, Optional, Any

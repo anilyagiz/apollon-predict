@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * Test script for ALGO ZK Oracle TypeScript SDK
+ * Test script for Apollon - ZK Oracle Oracle TypeScript SDK
  */
 
 import * as path from 'path';
@@ -179,7 +179,7 @@ async function testErrorScenarios(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log(' Starting ALGO ZK Oracle TypeScript SDK Tests');
+  console.log(' Starting Apollon - ZK Oracle Oracle TypeScript SDK Tests');
   console.log('=' .repeat(60));
   
   // Test main SDK functionality

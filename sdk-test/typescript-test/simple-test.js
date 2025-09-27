@@ -141,7 +141,7 @@ async function performanceTest() {
 }
 
 async function main() {
-  console.log(' Starting ALGO ZK Oracle TypeScript SDK Tests');
+  console.log(' Starting Apollon - ZK Oracle Oracle TypeScript SDK Tests');
   console.log('=' .repeat(60));
   
   await testSDK();

@@ -1,7 +1,7 @@
 /**
- * ALGO ZK Price Oracle SDK
+ * Apollon - ZK Oracle Price Oracle SDK
  * 
- * A TypeScript SDK for interacting with the ALGO ZK Price Oracle API,
+ * A TypeScript SDK for interacting with the Apollon - ZK Oracle Price Oracle API,
  * featuring zero-knowledge proof verification for privacy-enhanced 
  * machine learning predictions.
  */

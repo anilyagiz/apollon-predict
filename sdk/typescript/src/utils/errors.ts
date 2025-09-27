@@ -1,5 +1,5 @@
 /**
- * Error handling utilities for ALGO ZK Oracle SDK
+ * Error handling utilities for Apollon - ZK Oracle Oracle SDK
  */
 
 import { SDKError } from '../types';

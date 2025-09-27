@@ -1,5 +1,5 @@
 /**
- * Retry utilities for ALGO ZK Oracle SDK
+ * Retry utilities for Apollon - ZK Oracle Oracle SDK
  */
 
 import { isRetryableError } from './errors';

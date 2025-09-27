@@ -1,5 +1,5 @@
 """
-FastAPI Server for ALGO ZK Price Prediction Oracle
+FastAPI Server for Apollon - ZK Oracle Price Prediction Oracle
 Provides REST endpoints for price predictions and oracle data
 """
 
@@ -23,7 +23,7 @@ from zk_integration import zk_integration
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="ALGO ZK Price Oracle API",
+    title="Apollon - ZK Oracle Price Oracle API",
     description="Zero-Knowledge Enhanced Price Prediction Oracle for Algorand",
     version="1.0.0"
 )
@@ -103,7 +103,7 @@ app_state = {
 @app.on_event("startup")
 async def startup_event():
     """Initialize the application on startup"""
-    logger.info("Starting ALGO ZK Price Oracle API...")
+    logger.info("Starting Apollon - ZK Oracle Price Oracle API...")
     
     # Start background training
     asyncio.create_task(initialize_models())
@@ -137,7 +137,7 @@ async def initialize_models():
 async def root():
     """Root endpoint with API information"""
     return {
-        "name": "ALGO ZK Price Oracle API",
+        "name": "Apollon - ZK Oracle Price Oracle API",
         "version": "1.0.0",
         "description": "Zero-Knowledge Enhanced Price Prediction Oracle for Algorand",
         "endpoints": {

@@ -1,4 +1,4 @@
-# ALGO ZK Price Oracle
+# Apollon - ZK Oracle
 
 **Privacy-Enhanced Machine Learning Price Prediction System for Algorand Blockchain**
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-ALGO ZK Price Oracle is a cutting-edge price prediction system that combines machine learning with zero-knowledge cryptography to provide privacy-enhanced predictions for Algorand (ALGO) cryptocurrency prices. The system uses an ensemble of ML models while keeping model weights and individual predictions completely private through ZK-SNARK proofs.
+Apollon - ZK Oracle is a cutting-edge price prediction system that combines machine learning with zero-knowledge cryptography to provide privacy-enhanced predictions for Algorand (ALGO) cryptocurrency prices. The system uses an ensemble of ML models while keeping model weights and individual predictions completely private through ZK-SNARK proofs.
 
 ### Key Features
 
@@ -105,9 +105,9 @@ curl -X POST http://localhost:8000/predict-zk \
 #### TypeScript SDK
 
 ```typescript
-import { AlgoZKOracleClient } from "@algo-zk/oracle-sdk";
+import { Apollon - ZK OracleClient } from "@Apollon - ZK Oracle/oracle-sdk";
 
-const client = new AlgoZKOracleClient({
+const client = new Apollon - ZK OracleClient({
   baseURL: "http://localhost:8000",
   enableZKVerification: true,
 });
@@ -126,12 +126,12 @@ console.log(`Privacy: ${prediction.privacy_status.model_weights_hidden}`);
 
 ```python
 import asyncio
-from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
+from Apollon - ZK Oracle import Apollon - ZK OracleClient, SDKConfig
 
 async def main():
     config = SDKConfig(base_url="http://localhost:8000")
 
-    async with AlgoZKOracleClient(config) as client:
+    async with Apollon - ZK OracleClient(config) as client:
         # Generate ZK-enhanced prediction
         prediction = await client.predict_with_zk()
 
@@ -143,7 +143,7 @@ asyncio.run(main())
 
 ## Zero-Knowledge Privacy
 
-ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
+Apollon - ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 
 ### What's Hidden
 
@@ -231,7 +231,7 @@ ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 **Installation:**
 
 ```bash
-npm install @algo-zk/oracle-sdk
+npm install @Apollon - ZK Oracle/oracle-sdk
 ```
 
 **Features:**
@@ -247,7 +247,7 @@ npm install @algo-zk/oracle-sdk
 **Installation:**
 
 ```bash
-pip install algo-zk-oracle-sdk
+pip install Apollon - ZK Oracle-sdk
 ```
 
 **Features:**
@@ -401,7 +401,7 @@ python server.py
 
 ### Reporting Security Issues
 
-Please report security vulnerabilities to: security@algo-zk-oracle.com
+Please report security vulnerabilities to: security@Apollon - ZK Oracle.com
 
 ## License
 

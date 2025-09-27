@@ -1,4 +1,4 @@
-# ALGO ZK Price Prediction Oracle
+# Apollon - ZK Oracle Price Prediction Oracle
 
 A privacy-enhanced price prediction oracle for Algorand blockchain using Zero-Knowledge proofs and ensemble machine learning models.
 
@@ -14,7 +14,7 @@ This project implements a sophisticated price prediction oracle that combines:
 ## 🏗️ Architecture
 
 ```
-ALGO-ZK-ORACLE/
+Apollon - ZK Oracle/
 ├── backend/
 │   ├── oracle-core/          # Algorand oracle (from randlabs)
 │   ├── ml-engine/           # ML prediction models (from CryptoPredictions)
@@ -43,7 +43,7 @@ ALGO-ZK-ORACLE/
 1. **Clone and setup:**
 
 ```bash
-cd ALGO
+cd Apollon - ZK Oracle
 cp .env.example .env
 # Edit .env with your API keys
 ```

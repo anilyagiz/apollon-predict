@@ -1,5 +1,5 @@
 """
-Error handling for ALGO ZK Oracle SDK
+Error handling for Apollon - ZK Oracle Oracle SDK
 """
 
 from typing import Any, Optional
@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 class AlgoZKOracleError(Exception):
-    """Base exception for ALGO ZK Oracle SDK"""
+    """Base exception for Apollon - ZK Oracle Oracle SDK"""
     
     def __init__(self, code: str, message: str, details: Optional[Any] = None):
         super().__init__(message)

@@ -1,7 +1,7 @@
 {
   "name": "algo-zk-oracle-sdk-test",
   "version": "1.0.0",
-  "description": "Test suite for ALGO ZK Oracle TypeScript SDK",
+  "description": "Test suite for Apollon - ZK Oracle Oracle TypeScript SDK",
   "main": "test-sdk.js",
   "scripts": {
     "test": "node test-sdk.js",

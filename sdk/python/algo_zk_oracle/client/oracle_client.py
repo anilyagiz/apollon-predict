@@ -1,5 +1,5 @@
 """
-Main ALGO ZK Oracle SDK Client
+Main Apollon - ZK Oracle Oracle SDK Client
 """
 
 import httpx
@@ -31,7 +31,7 @@ from ..utils.retry import retry_async_func, RetryConfig
 
 class AlgoZKOracleClient:
     """
-    Async client for ALGO ZK Price Oracle API
+    Async client for Apollon - ZK Oracle Price Oracle API
     
     Provides access to price predictions, ZK-enhanced predictions,
     technical indicators, and other oracle data.

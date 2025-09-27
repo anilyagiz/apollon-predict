@@ -1,7 +1,7 @@
 """
-ALGO ZK Price Oracle SDK
+Apollon - ZK Oracle Price Oracle SDK
 
-A Python SDK for interacting with the ALGO ZK Price Oracle API,
+A Python SDK for interacting with the Apollon - ZK Oracle Price Oracle API,
 featuring zero-knowledge proof verification for privacy-enhanced 
 machine learning predictions.
 """
@@ -28,7 +28,7 @@ from .exceptions.errors import (
 )
 
 __version__ = "1.0.0"
-__author__ = "ALGO ZK Oracle Team"
+__author__ = "Apollon - ZK Oracle Oracle Team"
 
 __all__ = [
     "AlgoZKOracleClient",

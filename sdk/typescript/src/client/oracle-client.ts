@@ -1,5 +1,5 @@
 /**
- * Main ALGO ZK Oracle SDK Client
+ * Main Apollon - ZK Oracle Oracle SDK Client
  */
 
 import axios, { AxiosInstance, AxiosResponse } from 'axios';

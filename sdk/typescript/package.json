@@ -1,7 +1,7 @@
 {
-  "name": "@algo-zk/oracle-sdk",
+  "name": "@Apollon - ZK Oracle/oracle-sdk",
   "version": "1.0.0",
-  "description": "TypeScript SDK for ALGO ZK Price Oracle with Zero-Knowledge proof verification",
+  "description": "TypeScript SDK for Apollon - ZK Oracle Price Oracle with Zero-Knowledge proof verification",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -18,7 +18,7 @@
     "machine-learning",
     "prediction"
   ],
-  "author": "ALGO ZK Oracle Team",
+  "author": "Apollon - ZK Oracle Team",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",

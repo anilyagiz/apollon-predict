@@ -1,5 +1,5 @@
 """
-Basic usage examples for ALGO ZK Oracle Python SDK
+Basic usage examples for Apollon - ZK Oracle Oracle Python SDK
 """
 
 import asyncio

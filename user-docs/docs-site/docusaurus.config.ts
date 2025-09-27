@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'ALGO ZK Oracle',
+  title: 'Apollon - ZK Oracle',
   tagline: 'Privacy-Enhanced Machine Learning Price Prediction for Algorand',
   favicon: 'img/favicon.ico',
 
@@ -61,9 +61,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'ALGO ZK Oracle',
+      title: 'Apollon - ZK Oracle',
       logo: {
-        alt: 'ALGO ZK Oracle Logo',
+        alt: 'Apollon - ZK Oracle Oracle Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -145,7 +145,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} ALGO ZK Oracle. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Apollon - ZK Oracle Oracle. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

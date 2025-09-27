@@ -1,5 +1,5 @@
 """
-Ensemble ML Prediction Engine for ALGO ZK Oracle
+Ensemble ML Prediction Engine for Apollon - ZK Oracle Oracle
 Combines LSTM, GRU, Prophet, and XGBoost models for robust price prediction
 """
 

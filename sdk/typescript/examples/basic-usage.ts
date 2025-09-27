@@ -1,5 +1,5 @@
 /**
- * Basic usage examples for ALGO ZK Oracle SDK
+ * Basic usage examples for Apollon - ZK Oracle Oracle SDK
  */
 
 import { AlgoZKOracleClient } from '../src';

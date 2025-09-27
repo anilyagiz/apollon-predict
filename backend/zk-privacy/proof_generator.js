@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 /**
- * ALGO ZK Price Oracle - Proof Generation System
+ * Apollon - ZK Oracle Price Oracle - Proof Generation System
  * Generates zero-knowledge proofs for ML ensemble predictions
  */
 

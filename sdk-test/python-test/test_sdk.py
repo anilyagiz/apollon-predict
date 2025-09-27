@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for ALGO ZK Oracle Python SDK
+Test script for Apollon - ZK Oracle Oracle Python SDK
 """
 
 import asyncio
@@ -185,7 +185,7 @@ finally:
 
 async def main():
     """Main test function"""
-    print(" Starting ALGO ZK Oracle Python SDK Tests")
+    print(" Starting Apollon - ZK Oracle Oracle Python SDK Tests")
     print("=" * 60)
     
     # Test async SDK
