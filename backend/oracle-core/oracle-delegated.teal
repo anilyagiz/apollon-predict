@@ -1,0 +1,36 @@
+// Signs statements to be used as inputs to the TEAL script.
+// TMPL_ORACLE:	public key of the oracle 
+// TMPL_ORACLE_FEE: 			fee to pay to the oracle
+
+txn TypeEnum
+int 1
+==
+
+txn Fee
+global MinTxnFee
+==
+&&
+
+// Oracle fee
+txn Amount
+int 0 // TMPL_ORACLE_FEE
+==
+&&
+
+txn CloseRemainderTo 
+global ZeroAddress
+==
+&&
+
+txn Note
+btoi
+// this number is replaced by the inject function
+int 5
+==
+&&
+
+txn LastValid
+// this number is replaced by the inject function
+int 6
+<=
+&&

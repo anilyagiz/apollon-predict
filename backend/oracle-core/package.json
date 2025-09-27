@@ -1,0 +1,29 @@
+{
+  "name": "algo-zk-oracle-core",
+  "version": "1.0.0",
+  "description": "Algorand ZK Price Prediction Oracle Core",
+  "main": "price-submitter.js",
+  "scripts": {
+    "start": "node price-submitter.js",
+    "test": "mocha 'tests/**.test.js' --timeout=13000",
+    "dev": "nodemon price-submitter.js"
+  },
+  "author": "Oğuzhan Gümüş",
+  "license": "MIT",
+  "dependencies": {
+    "abort-controller": "^3.0.0",
+    "algosdk": "^2.0.0",
+    "axios": "^1.6.0",
+    "websocket": "^1.0.34",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "eslint-plugin-security": "^1.4.0",
+    "expect": "^29.0.0",
+    "mocha": "^10.0.0",
+    "nodemon": "^3.0.0"
+  }
+}
