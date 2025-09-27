@@ -18,7 +18,6 @@ ALGO ZK Price Oracle is a cutting-edge price prediction system that combines mac
 - **Real-time Data**: Multi-source price aggregation from CoinLore, Binance, CoinGecko
 - **Fast ZK Proofs**: ~350ms proof generation (500x performance improvement)
 - **Multi-language SDKs**: TypeScript/JavaScript and Python clients
-- **Production Ready**: FastAPI backend with comprehensive error handling
 
 ## Architecture
 
@@ -106,17 +105,17 @@ curl -X POST http://localhost:8000/predict-zk \
 #### TypeScript SDK
 
 ```typescript
-import { AlgoZKOracleClient } from '@algo-zk/oracle-sdk';
+import { AlgoZKOracleClient } from "@algo-zk/oracle-sdk";
 
 const client = new AlgoZKOracleClient({
-  baseURL: 'http://localhost:8000',
+  baseURL: "http://localhost:8000",
   enableZKVerification: true,
 });
 
 // Generate ZK-enhanced prediction
 const prediction = await client.predictWithZK({
-  symbol: 'ALGOUSD',
-  timeframe: '24h',
+  symbol: "ALGOUSD",
+  timeframe: "24h",
 });
 
 console.log(`Price: $${prediction.predicted_price}`);
@@ -131,11 +130,11 @@ from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
 
 async def main():
     config = SDKConfig(base_url="http://localhost:8000")
-    
+
     async with AlgoZKOracleClient(config) as client:
         # Generate ZK-enhanced prediction
         prediction = await client.predict_with_zk()
-        
+
         print(f"Price: ${prediction.predicted_price:.6f}")
         print(f"Privacy: {prediction.privacy_status.model_weights_hidden}")
 
@@ -147,16 +146,19 @@ asyncio.run(main())
 ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 
 ### What's Hidden
+
 - **Model Weights**: Individual model contributions (35%, 25%, 25%, 15%) are never revealed
 - **Individual Predictions**: Each model's prediction remains private
 - **Training Data**: Historical data patterns used for training
 
 ### What's Verified
+
 - **Correct Computation**: ZK proof confirms the ensemble calculation is mathematically correct
 - **Model Integrity**: Cryptographic guarantee that the prediction follows the claimed methodology
 - **No Tampering**: Any modification to weights or predictions invalidates the proof
 
 ### Performance
+
 - **Proof Generation**: ~350ms (optimized from 5+ minutes)
 - **Proof Verification**: <100ms client-side
 - **Circuit Compilation**: One-time setup (~2 seconds)
@@ -165,18 +167,19 @@ ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 
 ### Core Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | System health and model status |
-| `/price/current` | GET | Real-time aggregated price |
-| `/price/technicals` | GET | Technical indicators |
-| `/predict` | POST | Standard ML prediction |
-| `/predict-zk` | POST | Privacy-enhanced prediction |
-| `/verify-zk` | POST | Independent ZK proof verification |
+| Endpoint            | Method | Description                       |
+| ------------------- | ------ | --------------------------------- |
+| `/health`           | GET    | System health and model status    |
+| `/price/current`    | GET    | Real-time aggregated price        |
+| `/price/technicals` | GET    | Technical indicators              |
+| `/predict`          | POST   | Standard ML prediction            |
+| `/predict-zk`       | POST   | Privacy-enhanced prediction       |
+| `/verify-zk`        | POST   | Independent ZK proof verification |
 
 ### Response Examples
 
 **Health Check:**
+
 ```json
 {
   "status": "healthy",
@@ -186,6 +189,7 @@ ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 ```
 
 **Current Price:**
+
 ```json
 {
   "aggregated_price": 0.205034,
@@ -202,6 +206,7 @@ ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 ```
 
 **ZK Prediction:**
+
 ```json
 {
   "predicted_price": 0.208691,
@@ -224,11 +229,13 @@ ALGO ZK Oracle uses ZK-SNARKs to provide cryptographic privacy guarantees:
 ### TypeScript/JavaScript SDK
 
 **Installation:**
+
 ```bash
 npm install @algo-zk/oracle-sdk
 ```
 
 **Features:**
+
 - Full TypeScript support with type definitions
 - Browser and Node.js compatibility
 - ZK proof verification using snarkjs
@@ -238,11 +245,13 @@ npm install @algo-zk/oracle-sdk
 ### Python SDK
 
 **Installation:**
+
 ```bash
 pip install algo-zk-oracle-sdk
 ```
 
 **Features:**
+
 - Async and synchronous client interfaces
 - Pydantic models for type safety
 - httpx-based HTTP client
@@ -254,12 +263,14 @@ pip install algo-zk-oracle-sdk
 The system uses an ensemble of 4 specialized models:
 
 ### Model Weights
+
 - **LSTM (35%)**: Long Short-Term Memory neural network for sequence learning
-- **GRU (25%)**: Gated Recurrent Unit for efficient sequence processing  
+- **GRU (25%)**: Gated Recurrent Unit for efficient sequence processing
 - **Prophet (25%)**: Facebook's time series forecasting with seasonality
 - **XGBoost (15%)**: Gradient boosting for pattern recognition
 
 ### Features Used
+
 - Technical indicators (RSI, Bollinger Bands, Moving Averages)
 - Price lag features (1, 2, 3 periods back)
 - Volume indicators and ratios
@@ -267,6 +278,7 @@ The system uses an ensemble of 4 specialized models:
 - Volatility measurements
 
 ### Training Process
+
 - **Data Sources**: Multi-source historical price aggregation
 - **Training Frequency**: Adaptive retraining based on performance
 - **Validation**: Time-series cross-validation
@@ -309,13 +321,13 @@ cd backend/zk-privacy && node proof_generator.js
 
 ### Performance Benchmarks
 
-| Operation | Response Time | Notes |
-|-----------|---------------|-------|
-| Health Check | <50ms | System status |
-| Current Price | <200ms | Multi-source aggregation |
-| Standard Prediction | <500ms | 4-model ensemble |
-| ZK-Enhanced Prediction | <1500ms | Including proof generation |
-| ZK Proof Verification | <100ms | Client-side verification |
+| Operation              | Response Time | Notes                      |
+| ---------------------- | ------------- | -------------------------- |
+| Health Check           | <50ms         | System status              |
+| Current Price          | <200ms        | Multi-source aggregation   |
+| Standard Prediction    | <500ms        | 4-model ensemble           |
+| ZK-Enhanced Prediction | <1500ms       | Including proof generation |
+| ZK Proof Verification  | <100ms        | Client-side verification   |
 
 ## Deployment
 
@@ -344,14 +356,14 @@ uvicorn server:app --host 0.0.0.0 --port 8000 --workers 4
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENVIRONMENT` | `development` | Environment mode |
-| `LOG_LEVEL` | `info` | Logging level |
-| `API_HOST` | `localhost` | API bind host |
-| `API_PORT` | `8000` | API bind port |
-| `CORS_ORIGINS` | `["*"]` | CORS allowed origins |
-| `ZK_TIMEOUT` | `30` | ZK proof timeout (seconds) |
+| Variable       | Default       | Description                |
+| -------------- | ------------- | -------------------------- |
+| `ENVIRONMENT`  | `development` | Environment mode           |
+| `LOG_LEVEL`    | `info`        | Logging level              |
+| `API_HOST`     | `localhost`   | API bind host              |
+| `API_PORT`     | `8000`        | API bind port              |
+| `CORS_ORIGINS` | `["*"]`       | CORS allowed origins       |
+| `ZK_TIMEOUT`   | `30`          | ZK proof timeout (seconds) |
 
 ## Contributing
 
@@ -382,11 +394,13 @@ python server.py
 ## Security
 
 ### Privacy Guarantees
+
 - **Zero-Knowledge Proofs**: Cryptographic privacy for model weights
 - **No Data Retention**: Historical predictions not stored long-term
 - **Secure Communication**: HTTPS enforced in production
 
 ### Reporting Security Issues
+
 Please report security vulnerabilities to: security@algo-zk-oracle.com
 
 ## License
