@@ -243,7 +243,7 @@ export default function AdvancedRealTimeChart() {
       },
     },
     xaxis: {
-      type: "datetime",
+      type: "datetime" as const,
       labels: {
         format: "HH:mm:ss",
         style: {
@@ -271,17 +271,13 @@ export default function AdvancedRealTimeChart() {
     },
     tooltip: {
       theme: "dark",
-      style: {
-        backgroundColor: "#1F2937",
-        color: "#F9FAFB",
-      },
       x: {
         format: "HH:mm:ss",
       },
       y: {
         formatter: (value: number) => formatPrice(value),
       },
-      custom: function ({ series, seriesIndex, dataPointIndex, w }: any) {
+      custom: function ({ dataPointIndex }: { dataPointIndex: number }) {
         const data = priceHistory[dataPointIndex];
         if (!data) return "";
 
