@@ -4,11 +4,11 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="Apollon - ZK Oracle-sdk",
-    version="1.0.0",
-    author="Apollon - ZK Oracle Team",
-    author_email="contact@Apollon - ZK Oracle-oracle.com",
-    description="Python SDK for Apollon - ZK Oracle Price Oracle with Zero-Knowledge proof verification",
+    name="apollon-near-sdk",
+    version="2.0.0",
+    author="Apollon Team",
+    author_email="contact@apollon-oracle.com",
+    description="Python SDK for Apollon Oracle on NEAR Protocol with Zero-Knowledge proof verification",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/oguzhaangumuss/algo-price-predict",
@@ -23,6 +23,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -30,8 +31,11 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "httpx>=0.24.0",
-        "pydantic>=1.10.0",
+        "pydantic>=2.0.0",
         "typing-extensions>=4.0.0",
+        "near-api-py>=0.1.0",
+        "base58>=2.1.0",
+        "cryptography>=3.0.0",
     ],
     extras_require={
         "dev": [
@@ -43,7 +47,8 @@ setup(
         ],
     },
     keywords=[
-        "algorand",
+        "near",
+        "near-protocol",
         "price-oracle",
         "zero-knowledge",
         "zk-snark",
@@ -51,5 +56,6 @@ setup(
         "prediction",
         "cryptocurrency",
         "blockchain",
+        "intents",
     ],
 )

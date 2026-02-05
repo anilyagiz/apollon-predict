@@ -1,6 +1,6 @@
 {
-  "name": "algo-zk-dashboard",
-  "version": "0.1.0",
+  "name": "apollon-oracle-dashboard",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -10,11 +10,16 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@near-wallet-selector/core": "^8.9.0",
+    "@near-wallet-selector/my-near-wallet": "^8.9.0",
+    "@near-wallet-selector/modal-ui": "^8.9.0",
     "apexcharts": "^5.3.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
+    "near-api-js": "^3.0.0",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-apexcharts": "^1.7.0",

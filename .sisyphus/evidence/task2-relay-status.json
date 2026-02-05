@@ -1,0 +1,61 @@
+{
+  "relay_connection_test": {
+    "endpoint": "https://solver-relay-v2.chaindefuser.com/rpc",
+    "method": "get_status",
+    "timestamp": "2025-02-05T01:29:00Z",
+    "result": {
+      "status": "connected",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "intent_hash": "",
+          "status": "NOT_FOUND_OR_NOT_VALID",
+          "status_details": "INTERNAL_ERROR"
+        }
+      },
+      "notes": [
+        "Relay is online and responding to requests",
+        "The NOT_FOUND_OR_NOT_VALID status is expected for get_status without a valid intent_hash",
+        "INTERNAL_ERROR indicates the relay requires proper intent_hash parameter for status queries"
+      ]
+    }
+  },
+  "quote_endpoint_test": {
+    "endpoint": "https://solver-relay-v2.chaindefuser.com/rpc",
+    "method": "quote",
+    "timestamp": "2025-02-05T01:30:00Z",
+    "request": {
+      "defuse_asset_identifier_in": "nep141:wrap.near",
+      "defuse_asset_identifier_out": "nep141:usdc.near",
+      "exact_amount_in": "1000000000000000000000000"
+    },
+    "result": {
+      "status": "error",
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "error": {
+          "code": -32602,
+          "message": "invalid parameters",
+          "data": "json: unknown field \"defuse_asset_identifier_in\""
+        }
+      },
+      "notes": [
+        "The quote endpoint exists and is accessible",
+        "Parameter format may have changed or requires different field names",
+        "Need to consult latest API documentation for correct parameter structure"
+      ]
+    }
+  },
+  "summary": {
+    "relay_status": "ONLINE",
+    "connectivity": "SUCCESS",
+    "api_version": "v2",
+    "notes": [
+      "Solver relay is operational at solver-relay-v2.chaindefuser.com",
+      "RPC endpoint responds to JSON-RPC 2.0 requests",
+      "Further API documentation needed for correct parameter formats"
+    ]
+  }
+}

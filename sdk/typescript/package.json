@@ -1,7 +1,7 @@
 {
-  "name": "@Apollon - ZK Oracle/oracle-sdk",
-  "version": "1.0.0",
-  "description": "TypeScript SDK for Apollon - ZK Oracle Price Oracle with Zero-Knowledge proof verification",
+  "name": "@apollon/near-sdk",
+  "version": "2.0.0",
+  "description": "TypeScript SDK for Apollon Oracle on NEAR Protocol with Zero-Knowledge proof verification",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -11,14 +11,16 @@
     "prepare": "npm run build"
   },
   "keywords": [
-    "algorand",
+    "near",
+    "near-protocol",
     "price-oracle",
     "zero-knowledge",
     "zk-snark",
     "machine-learning",
-    "prediction"
+    "prediction",
+    "intents"
   ],
-  "author": "Apollon - ZK Oracle Team",
+  "author": "Apollon Team",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -29,8 +31,11 @@
     "@typescript-eslint/parser": "^6.0.0"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "snarkjs": "^0.7.0"
+    "near-api-js": "^3.0.0",
+    "@near-wallet-selector/core": "^8.0.0",
+    "@near-wallet-selector/my-near-wallet": "^8.0.0",
+    "snarkjs": "^0.7.0",
+    "axios": "^1.6.0"
   },
   "files": [
     "dist/**/*"

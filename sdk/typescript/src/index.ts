@@ -1,12 +1,16 @@
 /**
- * Apollon - ZK Oracle Price Oracle SDK
+ * Apollon Oracle SDK
  * 
- * A TypeScript SDK for interacting with the Apollon - ZK Oracle Price Oracle API,
+ * A TypeScript SDK for interacting with the Apollon Oracle on NEAR Protocol,
  * featuring zero-knowledge proof verification for privacy-enhanced 
  * machine learning predictions.
  */
 
-// Main client
+// NEAR Protocol Client (New)
+export { NearOracleClient } from './near/client';
+export type { NearOracleConfig, PredictionRequest, PredictionResponse } from './near/client';
+
+// Legacy Algorand Client (Deprecated)
 export { AlgoZKOracleClient } from './client/oracle-client';
 
 // Types
@@ -25,5 +29,5 @@ export {
 } from './utils/errors';
 export { withRetry, exponentialBackoff } from './utils/retry';
 
-// Default export for convenience
-export { AlgoZKOracleClient as default } from './client/oracle-client';
+// Default export - Now uses NEAR
+export { NearOracleClient as default } from './near/client';
