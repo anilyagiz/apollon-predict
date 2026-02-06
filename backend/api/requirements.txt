@@ -6,6 +6,7 @@ python-dotenv==1.0.0
 requests==2.31.0
 websockets==12.0
 py-algorand-sdk==2.0.0
+
 # ML Engine Dependencies (Required for ensemble predictor)
 numpy>=1.21.0
 pandas>=1.3.0
