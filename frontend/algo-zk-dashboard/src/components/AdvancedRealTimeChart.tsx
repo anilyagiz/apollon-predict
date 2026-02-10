@@ -284,7 +284,7 @@ export default function AdvancedRealTimeChart() {
         return `
           <div class="bg-gray-800 p-3 rounded-lg border border-gray-600">
             <div class="text-white font-semibold mb-2">ALGO Price</div>
-            <div class="text-blue-400">${data.price.toFixed(6)}</div>
+            <div class="text-neutral-400">${data.price.toFixed(6)}</div>
             <div class="text-sm text-gray-300 mt-1">
               Volume: ${formatVolume(data.volume)}
             </div>
@@ -317,7 +317,7 @@ export default function AdvancedRealTimeChart() {
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div>
           <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="w-6 h-6 text-green-400" />
+            <Activity className="w-6 h-6 text-neutral-400" />
             Advanced Real-Time ALGO Chart
             <Badge
               variant="secondary"
@@ -372,13 +372,13 @@ export default function AdvancedRealTimeChart() {
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
                 {isPositive ? (
-                  <TrendingUp className="w-3 h-3 text-green-400" />
+                  <TrendingUp className="w-3 h-3 text-neutral-400" />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-red-400" />
+                  <TrendingDown className="w-3 h-3 text-neutral-500" />
                 )}
                 <span
                   className={`text-xs ${
-                    isPositive ? "text-green-400" : "text-red-400"
+                    isPositive ? "text-neutral-400" : "text-neutral-500"
                   }`}
                 >
                   {isPositive ? "+" : ""}
@@ -389,14 +389,14 @@ export default function AdvancedRealTimeChart() {
 
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">24h Volume</div>
-              <div className="text-xl font-bold text-blue-400">
+              <div className="text-xl font-bold text-neutral-400">
                 {formatVolume(volumeData.volume24h)}
               </div>
               <div
                 className={`text-xs mt-1 ${
                   volumeData.volumeChange24h >= 0
-                    ? "text-green-400"
-                    : "text-red-400"
+                    ? "text-neutral-400"
+                    : "text-neutral-500"
                 }`}
               >
                 {volumeData.volumeChange24h >= 0 ? "+" : ""}
@@ -406,7 +406,7 @@ export default function AdvancedRealTimeChart() {
 
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Market Cap</div>
-              <div className="text-xl font-bold text-purple-400">
+              <div className="text-xl font-bold text-white">
                 {formatVolume(volumeData.marketCap)}
               </div>
               <div className="text-xs text-gray-400 mt-1">
@@ -416,7 +416,7 @@ export default function AdvancedRealTimeChart() {
 
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Data Quality</div>
-              <div className="text-xl font-bold text-green-400">
+              <div className="text-xl font-bold text-neutral-400">
                 {currentData.confidence.toFixed(2)}%
               </div>
               <div className="text-xs text-gray-400 mt-1">

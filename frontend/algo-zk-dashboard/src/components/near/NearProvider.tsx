@@ -11,7 +11,7 @@ import "@near-wallet-selector/modal-ui/styles.css";
 
 interface NearContextType {
   selector: WalletSelector | null;
-  modal: any;
+  modal: ReturnType<typeof setupModal> | null;
   accounts: AccountState[];
   accountId: string | null;
   isSignedIn: boolean;
@@ -36,7 +36,7 @@ export const NearProvider: React.FC<NearProviderProps> = ({
   verifierContract,
 }) => {
   const [selector, setSelector] = useState<WalletSelector | null>(null);
-  const [modal, setModal] = useState<any>(null);
+  const [modal, setModal] = useState<ReturnType<typeof setupModal> | null>(null);
   const [accounts, setAccounts] = useState<AccountState[]>([]);
   const [client, setClient] = useState<NearOracleClient | null>(null);
 

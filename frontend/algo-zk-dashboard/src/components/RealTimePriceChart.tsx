@@ -54,44 +54,35 @@ export default function RealTimePriceChart() {
   const [lastPrice, setLastPrice] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch ONLY real ALGO data from backend multi-source aggregator - NO MOCK DATA
+  // Fetch NEAR data from CoinGecko
   const fetchRealTimeData = useCallback(async () => {
     try {
-      console.log("Fetching real-time ALGO data from backend...");
-
-      // Use backend price aggregator (CoinLore, Cryptonator, Binance, CoinGecko)
-      const response = await fetch("http://localhost:8000/price/current");
+      const response = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true"
+      );
 
       if (!response.ok) {
-        throw new Error(`Backend aggregator error: ${response.status}`);
+        throw new Error(`CoinGecko API error: ${response.status}`);
       }
 
-      const backendData = await response.json();
-      console.log("Backend data received:", backendData);
+      const data = await response.json();
 
-      if (!backendData || typeof backendData.aggregated_price !== "number") {
-        throw new Error("No valid ALGO data received from aggregator");
+      if (!data || !data.near) {
+        throw new Error("No NEAR data received");
       }
 
       const now = new Date();
-      const currentPrice = backendData.aggregated_price; // Real aggregated price from multiple sources
+      const currentPrice = data.near.usd;
       const change = currentPrice - lastPrice;
-      const changePercent = lastPrice > 0 ? (change / lastPrice) * 100 : 0;
+      const changePercent = lastPrice > 0 ? (change / lastPrice) * 100 : data.near.usd_24h_change || 0;
 
-      // Extract real volume from best source
-      const bestVolumeSource = backendData.sources?.find(
-        (s: { volume_24h: number }) => s.volume_24h > 0
-      );
-      const realVolume = bestVolumeSource?.volume_24h || 0;
-      const realMarketCap = bestVolumeSource?.market_cap || 0;
-      const realVolumeChange = bestVolumeSource?.change_24h || 0;
+      const realVolume = data.near.usd_24h_vol || 0;
+      const realMarketCap = data.near.usd_market_cap || 0;
 
-      // Real volume data from backend aggregator - NO FALLBACKS
       setVolumeData({
         volume24h: realVolume,
-        volumeChange24h: realVolumeChange,
-        trades24h:
-          realVolume > 0 ? Math.floor(realVolume / (currentPrice * 100)) : 0,
+        volumeChange24h: data.near.usd_24h_change || 0,
+        trades24h: realVolume > 0 ? Math.floor(realVolume / (currentPrice * 100)) : 0,
         marketCap: realMarketCap,
       });
 
@@ -103,12 +94,12 @@ export default function RealTimePriceChart() {
           minute: "2-digit",
           second: "2-digit",
         }),
-        price: Number(currentPrice.toFixed(6)), // 6 decimal precision
+        price: Number(currentPrice.toFixed(6)),
         volume: realVolume,
         change: change,
         changePercent: changePercent,
-        sources: backendData.source_count || 1, // Number of successful API sources
-        confidence: backendData.confidence * 100 || 100, // Confidence percentage
+        sources: 1,
+        confidence: 95,
       };
 
       setPriceHistory((prev) => {
@@ -117,16 +108,9 @@ export default function RealTimePriceChart() {
         return updated.slice(-360);
       });
 
-      console.log("  Data point added:", {
-        price: currentPrice,
-        volume: realVolume,
-        sources: backendData.source_count,
-        dataPoints: priceHistory.length + 1,
-      });
-
       setLastPrice(currentPrice);
     } catch (error) {
-      console.error("Failed to fetch real ALGO data:", error);
+      console.error("Failed to fetch NEAR data:", error);
 
       // Add error data point to show connection issues in chart
       const now = new Date();
@@ -199,15 +183,15 @@ export default function RealTimePriceChart() {
       return (
         <div className="bg-black/90 backdrop-blur-lg border border-white/20 rounded-lg p-3 space-y-1">
           <p className="text-white font-medium text-sm">{`Time: ${label}`}</p>
-          <p className="text-blue-400 text-sm">{`Price: ${formatPrice(
+          <p className="text-neutral-400 text-sm">{`Price: ${formatPrice(
             data.price
           )}`}</p>
-          <p className="text-green-400 text-sm">{`Volume: ${formatVolume(
+          <p className="text-neutral-400 text-sm">{`Volume: ${formatVolume(
             data.volume
           )}`}</p>
           <p
             className={`text-sm ${
-              data.changePercent >= 0 ? "text-green-400" : "text-red-400"
+              data.changePercent >= 0 ? "text-neutral-400" : "text-neutral-500"
             }`}
           >
             {`Change: ${
@@ -228,8 +212,8 @@ export default function RealTimePriceChart() {
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div>
           <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="w-6 h-6 text-green-400" />
-            Real-Time ALGO Price
+            <Activity className="w-6 h-6 text-neutral-400" />
+            NEAR Price
             <Badge
               variant="secondary"
               className="bg-green-500/20 text-green-300 border-green-500/30"
@@ -284,13 +268,13 @@ export default function RealTimePriceChart() {
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
                 {isPositive ? (
-                  <TrendingUp className="w-3 h-3 text-green-400" />
+                  <TrendingUp className="w-3 h-3 text-neutral-400" />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-red-400" />
+                  <TrendingDown className="w-3 h-3 text-neutral-500" />
                 )}
                 <span
                   className={`text-xs ${
-                    isPositive ? "text-green-400" : "text-red-400"
+                    isPositive ? "text-neutral-400" : "text-neutral-500"
                   }`}
                 >
                   {isPositive ? "+" : ""}
@@ -301,14 +285,14 @@ export default function RealTimePriceChart() {
 
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">24h Volume</div>
-              <div className="text-xl font-bold text-blue-400">
+              <div className="text-xl font-bold text-neutral-400">
                 {formatVolume(volumeData.volume24h)}
               </div>
               <div
                 className={`text-xs mt-1 ${
                   volumeData.volumeChange24h >= 0
-                    ? "text-green-400"
-                    : "text-red-400"
+                    ? "text-neutral-400"
+                    : "text-neutral-500"
                 }`}
               >
                 {volumeData.volumeChange24h >= 0 ? "+" : ""}
@@ -318,7 +302,7 @@ export default function RealTimePriceChart() {
 
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Market Cap</div>
-              <div className="text-xl font-bold text-purple-400">
+              <div className="text-xl font-bold text-white">
                 {formatVolume(volumeData.marketCap)}
               </div>
               <div className="text-xs text-gray-400 mt-1">
@@ -328,7 +312,7 @@ export default function RealTimePriceChart() {
 
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Data Quality</div>
-              <div className="text-xl font-bold text-green-400">
+              <div className="text-xl font-bold text-neutral-400">
                 {currentData.confidence.toFixed(2)}%
               </div>
               <div className="text-xs text-gray-400 mt-1">

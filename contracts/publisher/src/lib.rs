@@ -1,7 +1,29 @@
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::UnorderedMap;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, log, near, AccountId, NearToken, Promise};
+use near_sdk::{env, log, near, require, AccountId, NearToken, Promise};
+
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Debug)]
+#[serde(crate = "near_sdk::serde")]
+pub enum Event {
+    PredictionRequested {
+        request_id: u64,
+        requester: AccountId,
+        asset: String,
+        timeframe: String,
+        deposit: NearToken,
+    },
+    PredictionFulfilled {
+        request_id: u64,
+        solver: AccountId,
+        predicted_price: u64,
+        zk_verified: bool,
+    },
+    PredictionCancelled {
+        request_id: u64,
+        requester: AccountId,
+    },
+}
 
 /// Prediction request status
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -122,6 +144,15 @@ impl Contract {
 
         log!("Prediction request created: id={}", request_id);
 
+        let event = Event::PredictionRequested {
+            request_id,
+            requester: requester.clone(),
+            asset: request.asset.clone(),
+            timeframe: request.timeframe.clone(),
+            deposit,
+        };
+        env::log_str(&serde_json::to_string(&event).unwrap_or_default());
+
         request_id
     }
 
@@ -168,6 +199,14 @@ impl Contract {
 
         self.requests.insert(&request_id, &request);
 
+        let event = Event::PredictionFulfilled {
+            request_id,
+            solver: solver.clone(),
+            predicted_price,
+            zk_verified,
+        };
+        env::log_str(&serde_json::to_string(&event).unwrap_or_default());
+
         Promise::new(solver).transfer(request.deposit)
     }
 
@@ -183,6 +222,12 @@ impl Contract {
 
         request.status = PredictionStatus::Cancelled;
         self.requests.insert(&request_id, &request);
+
+        let event = Event::PredictionCancelled {
+            request_id,
+            requester: caller.clone(),
+        };
+        env::log_str(&serde_json::to_string(&event).unwrap_or_default());
 
         Promise::new(caller).transfer(request.deposit)
     }
@@ -211,5 +256,56 @@ impl Contract {
             self.min_deposit,
             self.request_timeout,
         )
+    }
+
+    pub fn set_verifier_contract(&mut self, verifier: Option<AccountId>) {
+        require!(
+            env::predecessor_account_id() == self.owner,
+            "Only owner can set verifier"
+        );
+        self.verifier_contract = verifier;
+        log!("Verifier contract updated");
+    }
+
+    pub fn set_min_deposit(&mut self, min_deposit: NearToken) {
+        require!(
+            env::predecessor_account_id() == self.owner,
+            "Only owner can set min deposit"
+        );
+        self.min_deposit = min_deposit;
+        log!("Min deposit updated: {}", min_deposit);
+    }
+
+    pub fn set_request_timeout(&mut self, timeout: u64) {
+        require!(
+            env::predecessor_account_id() == self.owner,
+            "Only owner can set request timeout"
+        );
+        self.request_timeout = timeout;
+        log!("Request timeout updated: {}", timeout);
+    }
+
+    pub fn add_trusted_solver(&mut self, solver: AccountId) {
+        require!(
+            env::predecessor_account_id() == self.owner,
+            "Only owner can add trusted solver"
+        );
+        if !self.trusted_solvers.contains(&solver) {
+            self.trusted_solvers.push(solver);
+            log!("Trusted solver added");
+        }
+    }
+
+    pub fn remove_trusted_solver(&mut self, solver: AccountId) {
+        require!(
+            env::predecessor_account_id() == self.owner,
+            "Only owner can remove trusted solver"
+        );
+        self.trusted_solvers.retain(|s| s != &solver);
+        log!("Trusted solver removed");
+    }
+
+    pub fn get_trusted_solvers(&self) -> Vec<AccountId> {
+        self.trusted_solvers.clone()
     }
 }

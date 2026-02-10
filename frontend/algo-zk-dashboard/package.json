@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
-    "near-api-js": "^3.0.0",
+    "near-api-js": "^5.0.0",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-apexcharts": "^1.7.0",

@@ -1,4 +1,4 @@
-import { connect, keyStores, WalletConnection, Near, Contract } from 'near-api-js';
+import { connect, keyStores, WalletConnection, Near } from 'near-api-js';
 import type { Account } from 'near-api-js';
 
 export interface NearOracleConfig {
@@ -64,7 +64,8 @@ export class NearOracleClient {
     await this.wallet.requestSignIn({
       contractId: this.config.publisherContract,
       methodNames: ['request_prediction', 'cancel_request'],
-    });
+      keyType: 'ed25519',
+    } as any);
   }
 
   signOut(): void {
@@ -95,9 +96,9 @@ export class NearOracleClient {
       gas: BigInt('50000000000000'), // 50 TGas
     });
 
-    // Extract request_id from result
-    const requestId = result.status.SuccessValue ? 
-      JSON.parse(Buffer.from(result.status.SuccessValue, 'base64').toString()) : 
+    const status = result.status as any;
+    const requestId = status.SuccessValue ? 
+      JSON.parse(Buffer.from(status.SuccessValue, 'base64').toString()) : 
       null;
     
     return requestId;
@@ -172,6 +173,29 @@ export class NearOracleClient {
       contractId: this.config.publisherContract,
       methodName: 'cancel_request',
       args: { request_id: requestId },
+      gas: BigInt('50000000000000'), // 50 TGas
+    });
+  }
+
+  async fulfillPrediction(
+    requestId: number,
+    predictedPrice: number,
+    zkProof?: Uint8Array
+  ): Promise<void> {
+    if (!this.wallet || !this.wallet.isSignedIn()) {
+      throw new Error('Not signed in. Call signIn() first.');
+    }
+
+    const account = this.wallet.account();
+    
+    await account.functionCall({
+      contractId: this.config.publisherContract,
+      methodName: 'fulfill_prediction',
+      args: {
+        request_id: requestId,
+        predicted_price: predictedPrice,
+        zk_proof: zkProof ? Array.from(zkProof) : undefined,
+      },
       gas: BigInt('50000000000000'), // 50 TGas
     });
   }

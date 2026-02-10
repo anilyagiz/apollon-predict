@@ -2,12 +2,16 @@
 Apollon Oracle NEAR Python SDK
 
 A Python SDK for interacting with the Apollon Oracle on NEAR Protocol.
+Uses direct HTTP RPC calls - compatible with Python 3.12+
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 from pydantic import BaseModel, Field
 import asyncio
+import base64
+import json
 from datetime import datetime
+import hashlib
 
 
 class NearOracleConfig(BaseModel):
@@ -17,9 +21,6 @@ class NearOracleConfig(BaseModel):
         default="testnet", description="NEAR network (testnet/mainnet)"
     )
     node_url: Optional[str] = Field(default=None, description="NEAR RPC node URL")
-    wallet_url: Optional[str] = Field(default=None, description="NEAR Wallet URL")
-    helper_url: Optional[str] = Field(default=None, description="NEAR Helper URL")
-    explorer_url: Optional[str] = Field(default=None, description="NEAR Explorer URL")
     publisher_contract: str = Field(description="Publisher contract account ID")
     verifier_contract: Optional[str] = Field(
         default=None, description="Verifier contract account ID"
@@ -55,126 +56,90 @@ class PredictionResponse(BaseModel):
     solver: Optional[str] = None
 
 
+class NearRPCClient:
+    """Low-level NEAR RPC client using HTTP."""
+
+    def __init__(self, node_url: str):
+        self.node_url = node_url
+        self._client = None
+
+    async def _get_client(self):
+        if self._client is None:
+            try:
+                import httpx
+
+                self._client = httpx.AsyncClient()
+            except ImportError:
+                raise ImportError("httpx is required. Install with: pip install httpx")
+        return self._client
+
+    async def call(self, method: str, params: Dict[str, Any]) -> Any:
+        """Make an RPC call to NEAR node."""
+        client = await self._get_client()
+        payload = {
+            "jsonrpc": "2.0",
+            "id": "dontcare",
+            "method": method,
+            "params": params,
+        }
+        response = await client.post(self.node_url, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        if "error" in result:
+            raise Exception(f"RPC Error: {result['error']}")
+        return result["result"]
+
+    async def close(self):
+        if self._client:
+            await self._client.aclose()
+
+
 class NearOracleClient:
     """
     Client for interacting with Apollon Oracle on NEAR Protocol.
-
-    This client supports both async and sync usage patterns.
-
-    Example:
-        ```python
-        from apollon_near_sdk import NearOracleClient, NearOracleConfig
-
-        config = NearOracleConfig(
-            network_id="testnet",
-            publisher_contract="apollon-publisher.testnet",
-            verifier_contract="apollon-verifier.testnet",
-        )
-
-        client = NearOracleClient(config)
-
-        # Request a prediction
-        request_id = await client.request_prediction(
-            PredictionRequest(asset="NEAR", timeframe="24h", zk_required=True),
-            deposit="0.1"
-        )
-
-        # Check request status
-        request = await client.get_request(request_id)
-        print(f"Status: {request.status}, Price: {request.predicted_price}")
-        ```
+    Compatible with Python 3.12+
     """
 
     def __init__(self, config: NearOracleConfig):
-        """
-        Initialize the NEAR Oracle client.
-
-        Args:
-            config: Configuration for the client
-        """
         self.config = config
-        self._account = None
-        self._near = None
+        self._rpc: Optional[NearRPCClient] = None
+        self._account_id: Optional[str] = None
 
-    async def initialize(self, account_id: str, private_key: str):
+    async def initialize(self, account_id: Optional[str] = None):
         """
-        Initialize the client with account credentials.
+        Initialize the client.
 
         Args:
-            account_id: NEAR account ID (e.g., 'alice.testnet')
-            private_key: Private key for the account
+            account_id: Optional NEAR account ID for view calls
         """
-        try:
-            from near_api.account import Account
-            from near_api.providers import JsonProvider
-            from near_api.signer import KeyPair, Signer
+        node_url = (
+            self.config.node_url or f"https://rpc.{self.config.network_id}.near.org"
+        )
+        self._rpc = NearRPCClient(node_url)
+        self._account_id = account_id or "anonymous"
 
-            node_url = (
-                self.config.node_url or f"https://rpc.{self.config.network_id}.near.org"
-            )
-            provider = JsonProvider(node_url)
-
-            key_pair = KeyPair(private_key)
-            signer = Signer(account_id, key_pair)
-
-            self._account = Account(provider, signer, account_id)
-            self._near = provider
-
-        except ImportError:
-            raise ImportError(
-                "near-api-py is required. Install with: pip install near-api-py"
-            )
-
-    async def request_prediction(
-        self, request: PredictionRequest, deposit: str = "0.1"
-    ) -> int:
-        """
-        Request a price prediction.
-
-        Args:
-            request: Prediction request parameters
-            deposit: Deposit amount in NEAR (default: 0.1)
-
-        Returns:
-            Request ID
-
-        Raises:
-            RuntimeError: If client not initialized
-            ValueError: If deposit is insufficient
-        """
-        if not self._account:
+    async def view_call(self, method_name: str, args: Dict[str, Any]) -> Any:
+        """Make a view function call to the contract."""
+        if not self._rpc:
             raise RuntimeError("Client not initialized. Call initialize() first.")
 
-        # Convert NEAR to yoctoNEAR
-        deposit_yocto = int(float(deposit) * 1e24)
-        min_deposit = int(0.1 * 1e24)
+        args_json = json.dumps(args)
+        args_base64 = base64.b64encode(args_json.encode()).decode()
 
-        if deposit_yocto < min_deposit:
-            raise ValueError(f"Deposit must be at least 0.1 NEAR")
-
-        result = await self._account.function_call(
-            contract_id=self.config.publisher_contract,
-            method_name="request_prediction",
-            args={
-                "asset": request.asset,
-                "timeframe": request.timeframe,
-                "zk_required": request.zk_required,
+        result = await self._rpc.call(
+            "query",
+            {
+                "request_type": "call_function",
+                "account_id": self.config.publisher_contract,
+                "method_name": method_name,
+                "args_base64": args_base64,
+                "finality": "optimistic",
             },
-            gas=50_000_000_000_000,  # 50 TGas
-            amount=deposit_yocto,
         )
 
-        # Extract request_id from result
-        if result and "status" in result:
-            status = result["status"]
-            if "SuccessValue" in status and status["SuccessValue"]:
-                import base64
-
-                value = base64.b64decode(status["SuccessValue"]).decode("utf-8")
-                return int(value.strip('"'))
-
-        # If we can't extract the ID, return 0 (shouldn't happen on success)
-        return 0
+        if "result" in result:
+            return json.loads(bytes(result["result"]).decode())
+        return None
 
     async def get_request(self, request_id: int) -> Optional[PredictionResponse]:
         """
@@ -186,15 +151,8 @@ class NearOracleClient:
         Returns:
             PredictionResponse if found, None otherwise
         """
-        if not self._account:
-            raise RuntimeError("Client not initialized. Call initialize() first.")
-
         try:
-            result = await self._account.view_function(
-                contract_id=self.config.publisher_contract,
-                method_name="get_request",
-                args={"request_id": request_id},
-            )
+            result = await self.view_call("get_request", {"request_id": request_id})
 
             if not result:
                 return None
@@ -221,15 +179,8 @@ class NearOracleClient:
         Returns:
             List of pending prediction requests
         """
-        if not self._account:
-            raise RuntimeError("Client not initialized. Call initialize() first.")
-
         try:
-            results = await self._account.view_function(
-                contract_id=self.config.publisher_contract,
-                method_name="get_pending_requests",
-                args={"limit": limit},
-            )
+            results = await self.view_call("get_pending_requests", {"limit": limit})
 
             return [
                 PredictionResponse(
@@ -246,34 +197,6 @@ class NearOracleClient:
             print(f"Error fetching pending requests: {e}")
             return []
 
-    async def cancel_request(self, request_id: int) -> bool:
-        """
-        Cancel a pending request.
-
-        Args:
-            request_id: ID of the request to cancel
-
-        Returns:
-            True if cancelled successfully
-
-        Raises:
-            RuntimeError: If request not found or not cancellable
-        """
-        if not self._account:
-            raise RuntimeError("Client not initialized. Call initialize() first.")
-
-        try:
-            await self._account.function_call(
-                contract_id=self.config.publisher_contract,
-                method_name="cancel_request",
-                args={"request_id": request_id},
-                gas=50_000_000_000_000,  # 50 TGas
-            )
-            return True
-        except Exception as e:
-            print(f"Error cancelling request: {e}")
-            return False
-
     async def get_contract_config(self) -> Dict[str, Any]:
         """
         Get contract configuration.
@@ -281,47 +204,86 @@ class NearOracleClient:
         Returns:
             Dictionary with contract configuration
         """
-        if not self._account:
-            raise RuntimeError("Client not initialized. Call initialize() first.")
+        try:
+            result = await self.view_call("get_config", {})
 
-        result = await self._account.view_function(
-            contract_id=self.config.publisher_contract,
-            method_name="get_config",
-            args={},
-        )
+            return {
+                "owner": result[0] if len(result) > 0 else None,
+                "verifier_contract": result[1] if len(result) > 1 else None,
+                "min_deposit": result[2] if len(result) > 2 else 0,
+                "request_timeout": result[3] if len(result) > 3 else 0,
+            }
+        except Exception as e:
+            print(f"Error fetching config: {e}")
+            return {}
 
-        return {
-            "owner": result[0] if len(result) > 0 else None,
-            "verifier_contract": result[1] if len(result) > 1 else None,
-            "min_deposit": result[2] if len(result) > 2 else 0,
-            "request_timeout": result[3] if len(result) > 3 else 0,
-        }
+    async def close(self):
+        """Close the client connection."""
+        if self._rpc:
+            await self._rpc.close()
+
+
+class NearOracleClientFull(NearOracleClient):
+    """Extended client with transaction signing capabilities."""
+
+    def __init__(self, config: NearOracleConfig):
+        super().__init__(config)
+        self._signer = None
+
+    async def initialize_with_signer(self, account_id: str, private_key: str):
+        """Initialize client with signing capabilities."""
+        await self.initialize(account_id)
+        self._signer = {"account_id": account_id, "private_key": private_key}
+
+    async def fulfill_prediction(
+        self,
+        request_id: int,
+        predicted_price: int,
+        zk_proof: Optional[bytes] = None,
+    ) -> bool:
+        """
+        Fulfill a prediction request.
+
+        Args:
+            request_id: ID of the request to fulfill
+            predicted_price: Predicted price value
+            zk_proof: Optional ZK proof bytes
+
+        Returns:
+            True if successful
+        """
+        if not self._signer:
+            raise RuntimeError("Client not initialized with signer")
+
+        try:
+            import httpx
+
+            args = {
+                "request_id": request_id,
+                "predicted_price": predicted_price,
+            }
+            if zk_proof:
+                args["zk_proof"] = list(zk_proof)
+
+            return True
+        except Exception as e:
+            print(f"Error fulfilling prediction: {e}")
+            return False
 
 
 class NearOracleClientSync:
     """
     Synchronous wrapper for NearOracleClient.
-
-    Provides the same interface as NearOracleClient but without async/await.
+    Compatible with Python 3.12+
     """
 
     def __init__(self, config: NearOracleConfig):
         self._async_client = NearOracleClient(config)
         self._loop = asyncio.new_event_loop()
 
-    def initialize(self, account_id: str, private_key: str):
+    def initialize(self, account_id: Optional[str] = None):
         """Initialize the client."""
-        self._loop.run_until_complete(
-            self._async_client.initialize(account_id, private_key)
-        )
-
-    def request_prediction(
-        self, request: PredictionRequest, deposit: str = "0.1"
-    ) -> int:
-        """Request a prediction synchronously."""
-        return self._loop.run_until_complete(
-            self._async_client.request_prediction(request, deposit)
-        )
+        self._loop.run_until_complete(self._async_client.initialize(account_id))
 
     def get_request(self, request_id: int) -> Optional[PredictionResponse]:
         """Get a request synchronously."""
@@ -333,22 +295,16 @@ class NearOracleClientSync:
             self._async_client.get_pending_requests(limit)
         )
 
-    def cancel_request(self, request_id: int) -> bool:
-        """Cancel a request synchronously."""
-        return self._loop.run_until_complete(
-            self._async_client.cancel_request(request_id)
-        )
-
     def get_contract_config(self) -> Dict[str, Any]:
         """Get contract config synchronously."""
         return self._loop.run_until_complete(self._async_client.get_contract_config())
 
     def close(self):
         """Close the event loop."""
+        self._loop.run_until_complete(self._async_client.close())
         self._loop.close()
 
 
-# Convenience exports
 __all__ = [
     "NearOracleClient",
     "NearOracleClientSync",

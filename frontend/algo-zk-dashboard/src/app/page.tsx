@@ -1,56 +1,36 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import HeroSection from "@/components/HeroSection";
 import PredictionChart from "@/components/PredictionChart";
 import RealTimePriceChart from "@/components/RealTimePriceChart";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-6 py-12 max-w-7xl">
         {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <HeroSection />
-        </motion.div>
+        <HeroSection />
 
-        {/* Real-Time Price Chart - Full Width */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-12"
-        >
+        {/* Real-Time Price Chart */}
+        <div className="mt-16">
           <RealTimePriceChart />
-        </motion.div>
+        </div>
 
         {/* Main Content Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-8 grid grid-cols-1 xl:grid-cols-3 gap-8"
-        >
+        <div className="mt-12 grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Left Side - Project Info */}
           <div className="xl:col-span-1">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
-            >
-              <h2 className="text-2xl font-bold text-white mb-4">
+            <div className="bg-neutral-900 rounded-lg p-6 border border-neutral-800">
+              <h2 className="text-xl font-semibold text-white mb-6">
                 ZK Price Oracle
               </h2>
-              <div className="space-y-4 text-gray-300">
+              <div className="space-y-6 text-neutral-400">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-base font-medium text-white mb-2">
                     Zero-Knowledge Privacy
                   </h3>
-                  <p className="text-sm">
+                  <p className="text-sm leading-relaxed">
                     Model weights and individual predictions remain completely
                     private while proving correct ensemble calculations using
                     ZK-SNARKs.
@@ -58,49 +38,49 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-base font-medium text-white mb-3">
                     ML Ensemble Models
                   </h3>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-blue-500/20 rounded-lg p-2">
-                      <div className="font-medium">LSTM</div>
-                      <div className="text-blue-300">35% weight</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between py-2 border-b border-neutral-800">
+                      <span>LSTM</span>
+                      <span className="text-white">35%</span>
                     </div>
-                    <div className="bg-green-500/20 rounded-lg p-2">
-                      <div className="font-medium">GRU</div>
-                      <div className="text-green-300">25% weight</div>
+                    <div className="flex justify-between py-2 border-b border-neutral-800">
+                      <span>GRU</span>
+                      <span className="text-white">25%</span>
                     </div>
-                    <div className="bg-yellow-500/20 rounded-lg p-2">
-                      <div className="font-medium">Prophet</div>
-                      <div className="text-yellow-300">25% weight</div>
+                    <div className="flex justify-between py-2 border-b border-neutral-800">
+                      <span>Prophet</span>
+                      <span className="text-white">25%</span>
                     </div>
-                    <div className="bg-purple-500/20 rounded-lg p-2">
-                      <div className="font-medium">XGBoost</div>
-                      <div className="text-purple-300">15% weight</div>
+                    <div className="flex justify-between py-2">
+                      <span>XGBoost</span>
+                      <span className="text-white">15%</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-base font-medium text-white mb-2">
                     Technical Features
                   </h3>
-                  <ul className="text-sm space-y-1">
-                    <li>• Groth16 ZK-SNARK proofs</li>
-                    <li>• Multi-source price aggregation</li>
-                    <li>• Real-time model training</li>
-                    <li>• Privacy-preserving predictions</li>
+                  <ul className="text-sm space-y-2">
+                    <li>Groth16 ZK-SNARK proofs</li>
+                    <li>Multi-source price aggregation</li>
+                    <li>Real-time model training</li>
+                    <li>Privacy-preserving predictions</li>
                   </ul>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Right Side - Prediction Chart */}
           <div className="xl:col-span-2">
             <PredictionChart />
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

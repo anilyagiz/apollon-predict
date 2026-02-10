@@ -159,7 +159,7 @@ export default function PredictionChart() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="w-6 h-6 text-blue-400" />
+            <Activity className="w-6 h-6 text-neutral-400" />
             Price Prediction Chart
           </CardTitle>
           <p className="text-gray-400 mt-1">24-hour ML ensemble forecasting</p>
@@ -210,7 +210,7 @@ export default function PredictionChart() {
             
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">24h Prediction</div>
-              <div className="text-2xl font-bold text-blue-400">
+              <div className="text-2xl font-bold text-neutral-400">
                 {formatPrice(predictionData.predicted_price)}
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function PredictionChart() {
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Expected Change</div>
               <div className={`text-2xl font-bold ${
-                predictionData.price_change >= 0 ? 'text-green-400' : 'text-red-400'
+                predictionData.price_change >= 0 ? 'text-neutral-400' : 'text-neutral-500'
               }`}>
                 {formatPercent(predictionData.price_change_percent)}
               </div>
@@ -226,7 +226,7 @@ export default function PredictionChart() {
             
             <div className="bg-white/5 rounded-lg p-4 text-center">
               <div className="text-gray-400 text-sm">Confidence</div>
-              <div className="text-2xl font-bold text-green-400">
+              <div className="text-2xl font-bold text-neutral-400">
                 {(predictionData.confidence * 100).toFixed(1)}%
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function PredictionChart() {
                   lstm: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
                   gru: 'bg-green-500/20 text-green-300 border-green-500/30',
                   prophet: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-                  xgboost: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                  xgboost: 'bg-neutral-800 text-purple-300 border-neutral-700'
                 };
                 
                 return (

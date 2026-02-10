@@ -3,7 +3,8 @@
  */
 
 import { groth16 } from 'snarkjs';
-import { ZKProof, ZKVerificationError } from '../types';
+import { ZKProof } from '../types';
+import { ZKVerificationError } from './errors';
 
 export interface ZKVerificationKey {
   protocol: string;
@@ -36,7 +37,7 @@ export class ZKVerifier {
       if (!response.ok) {
         throw new Error(`Failed to fetch verification key: ${response.statusText}`);
       }
-      const vKey = await response.json();
+      const vKey = await response.json() as ZKVerificationKey;
       this.setVerificationKey(vKey);
     } catch (error) {
       throw new ZKVerificationError(

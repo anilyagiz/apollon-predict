@@ -33,9 +33,6 @@ setup(
         "httpx>=0.24.0",
         "pydantic>=2.0.0",
         "typing-extensions>=4.0.0",
-        "near-api-py>=0.1.0",
-        "base58>=2.1.0",
-        "cryptography>=3.0.0",
     ],
     extras_require={
         "dev": [
