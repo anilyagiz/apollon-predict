@@ -131,6 +131,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Install Rust (for Circom)
+      uses: dtolnay/rust-action@stable
+    
+    - name: Install Circom
+      run: |
+        echo "Installing Circom compiler..."
+        sudo apt-get update && sudo apt-get install -y libgmp-dev
+        git clone https://github.com/iden3/circom.git /tmp/circom
+        cd /tmp/circom
+        cargo build --release
+        sudo cp target/release/circom /usr/local/bin/
+        circom --version
+    
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -143,9 +156,19 @@ jobs:
         cd backend/zk-privacy
         npm ci
     
-    - name: Setup ZK system
+    - name: Compile ZK Circuit
       run: |
         cd backend/zk-privacy
+        echo "Compiling prediction verification circuit..."
+        mkdir -p build
+        circom circuits/prediction_verification.circom --wasm --r1cs -o build/
+        echo "✅ Circuit compiled successfully"
+        ls -la build/prediction_verification_js/
+    
+    - name: Setup ZK Keys (Development)
+      run: |
+        cd backend/zk-privacy
+        echo "Setting up ZK proving keys..."
         node setup.js
     
     - name: Test ZK proof generation
