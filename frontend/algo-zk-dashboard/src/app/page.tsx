@@ -4,6 +4,9 @@ import React from "react";
 import HeroSection from "@/components/HeroSection";
 import PredictionChart from "@/components/PredictionChart";
 import RealTimePriceChart from "@/components/RealTimePriceChart";
+import TokenSwap from "@/components/TokenSwap";
+import IntentSwapPanel from "@/components/IntentSwapPanel";
+import AgentStatus from "@/components/AgentStatus";
 
 export default function HomePage() {
   return (
@@ -19,8 +22,8 @@ export default function HomePage() {
 
         {/* Main Content Grid */}
         <div className="mt-12 grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Left Side - Project Info */}
-          <div className="xl:col-span-1">
+          {/* Left Side - Project Info + Agent Status */}
+          <div className="xl:col-span-1 space-y-6">
             <div className="bg-neutral-900 rounded-lg p-6 border border-neutral-800">
               <h2 className="text-xl font-semibold text-white mb-6">
                 ZK Price Oracle
@@ -70,15 +73,24 @@ export default function HomePage() {
                     <li>Multi-source price aggregation</li>
                     <li>Real-time model training</li>
                     <li>Privacy-preserving predictions</li>
+                    <li>Cross-chain via NEAR Intents</li>
+                    <li>Shade Agent (TEE oracle)</li>
                   </ul>
                 </div>
               </div>
             </div>
+
+            {/* Oracle Agent Status */}
+            <AgentStatus />
+
+            {/* Intent-based Prediction Payment */}
+            <IntentSwapPanel />
           </div>
 
-          {/* Right Side - Prediction Chart */}
-          <div className="xl:col-span-2">
+          {/* Right Side - Prediction Chart + Token Swap */}
+          <div className="xl:col-span-2 space-y-8">
             <PredictionChart />
+            <TokenSwap />
           </div>
         </div>
       </div>

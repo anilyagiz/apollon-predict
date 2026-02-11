@@ -9,6 +9,8 @@ export interface NearOracleConfig {
   explorerUrl?: string;
   publisherContract: string;
   verifierContract?: string;
+  /** Backend API URL for swap/intent endpoints (default: http://localhost:8000) */
+  apiUrl?: string;
 }
 
 export interface PredictionRequest {
@@ -198,6 +200,170 @@ export class NearOracleClient {
       },
       gas: BigInt('50000000000000'), // 50 TGas
     });
+  }
+
+  // ===========================================================================
+  // Token Swap / Intent Methods (via 1Click API backend)
+  // ===========================================================================
+
+  /**
+   * Get supported tokens for cross-chain swaps.
+   */
+  async getSwapTokens(chain?: string): Promise<any[]> {
+    const url = chain
+      ? `${this.getApiUrl()}/swap/tokens?chain=${chain}`
+      : `${this.getApiUrl()}/swap/tokens`;
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Failed to fetch swap tokens: ${resp.status}`);
+    const data = await resp.json();
+    return data.tokens || [];
+  }
+
+  /**
+   * Get supported chains for cross-chain swaps.
+   */
+  async getSwapChains(): Promise<any[]> {
+    const resp = await fetch(`${this.getApiUrl()}/swap/chains`);
+    if (!resp.ok) throw new Error(`Failed to fetch chains: ${resp.status}`);
+    const data = await resp.json();
+    return data.chains || [];
+  }
+
+  /**
+   * Get a swap quote from NEAR Intents 1Click API.
+   */
+  async getSwapQuote(params: {
+    originAsset: string;
+    destinationAsset: string;
+    amount: string;
+    recipient: string;
+    refundTo?: string;
+    slippageTolerance?: number;
+  }): Promise<any> {
+    const resp = await fetch(`${this.getApiUrl()}/swap/quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin_asset: params.originAsset,
+        destination_asset: params.destinationAsset,
+        amount: params.amount,
+        recipient: params.recipient,
+        refund_to: params.refundTo || params.recipient,
+        slippage_tolerance: params.slippageTolerance || 100,
+        dry: true,
+      }),
+    });
+    if (!resp.ok) throw new Error(`Swap quote failed: ${resp.status}`);
+    return await resp.json();
+  }
+
+  /**
+   * Execute a cross-chain swap. Returns deposit address.
+   */
+  async executeSwap(params: {
+    originAsset: string;
+    destinationAsset: string;
+    amount: string;
+    recipient: string;
+    refundTo?: string;
+    slippageTolerance?: number;
+  }): Promise<{ depositAddress: string; quote: any }> {
+    const resp = await fetch(`${this.getApiUrl()}/swap/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin_asset: params.originAsset,
+        destination_asset: params.destinationAsset,
+        amount: params.amount,
+        recipient: params.recipient,
+        refund_to: params.refundTo || params.recipient,
+        slippage_tolerance: params.slippageTolerance || 100,
+      }),
+    });
+    if (!resp.ok) throw new Error(`Swap execution failed: ${resp.status}`);
+    return await resp.json();
+  }
+
+  /**
+   * Check the status of a cross-chain swap.
+   */
+  async getSwapStatus(depositAddress: string): Promise<{
+    status: string;
+    [key: string]: any;
+  }> {
+    const resp = await fetch(`${this.getApiUrl()}/swap/status/${depositAddress}`);
+    if (!resp.ok) throw new Error(`Status check failed: ${resp.status}`);
+    return await resp.json();
+  }
+
+  /**
+   * Get a quote for paying for a prediction via cross-chain intent.
+   */
+  async getPredictionPaymentQuote(params: {
+    originAsset: string;
+    amount: string;
+    refundTo: string;
+  }): Promise<any> {
+    const resp = await fetch(`${this.getApiUrl()}/intents/prediction/quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin_asset: params.originAsset,
+        amount: params.amount,
+        recipient_near_account: this.config.publisherContract,
+        refund_to: params.refundTo,
+      }),
+    });
+    if (!resp.ok) throw new Error(`Payment quote failed: ${resp.status}`);
+    return await resp.json();
+  }
+
+  /**
+   * Execute a cross-chain prediction payment.
+   */
+  async executePredictionPayment(params: {
+    originAsset: string;
+    amount: string;
+    refundTo: string;
+  }): Promise<{ depositAddress: string; quote: any }> {
+    const resp = await fetch(`${this.getApiUrl()}/intents/prediction/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin_asset: params.originAsset,
+        amount: params.amount,
+        recipient_near_account: this.config.publisherContract,
+        refund_to: params.refundTo,
+      }),
+    });
+    if (!resp.ok) throw new Error(`Payment execution failed: ${resp.status}`);
+    return await resp.json();
+  }
+
+  /**
+   * Get Shade Agent oracle status.
+   */
+  async getAgentStatus(): Promise<{
+    enabled: boolean;
+    status: string;
+    total_fulfilled: number;
+    last_fulfillment: string | null;
+    tee_attestation: string | null;
+    chains: string[];
+  }> {
+    const resp = await fetch(`${this.getApiUrl()}/agent/status`);
+    if (!resp.ok) throw new Error(`Agent status failed: ${resp.status}`);
+    return await resp.json();
+  }
+
+  // ===========================================================================
+  // Private helpers
+  // ===========================================================================
+
+  private getApiUrl(): string {
+    // Use the API URL from config or default
+    return (this.config as any).apiUrl || 'http://localhost:8000';
   }
 
   private nearToYocto(near: string): string {

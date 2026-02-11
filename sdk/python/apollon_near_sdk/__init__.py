@@ -25,6 +25,10 @@ class NearOracleConfig(BaseModel):
     verifier_contract: Optional[str] = Field(
         default=None, description="Verifier contract account ID"
     )
+    api_url: str = Field(
+        default="http://localhost:8000",
+        description="Backend API URL for swap/intent endpoints",
+    )
 
     class Config:
         arbitrary_types_allowed = True
@@ -104,6 +108,7 @@ class NearOracleClient:
         self.config = config
         self._rpc: Optional[NearRPCClient] = None
         self._account_id: Optional[str] = None
+        self._api_url: str = config.api_url
 
     async def initialize(self, account_id: Optional[str] = None):
         """
@@ -217,6 +222,143 @@ class NearOracleClient:
             print(f"Error fetching config: {e}")
             return {}
 
+    # =========================================================================
+    # Token Swap / Intent Methods (via 1Click API backend)
+    # =========================================================================
+
+    async def get_swap_tokens(self, chain: Optional[str] = None) -> List[Dict]:
+        """Get supported tokens for cross-chain swaps."""
+        url = f"{self._api_url}/swap/tokens"
+        if chain:
+            url += f"?chain={chain}"
+
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("tokens", [])
+
+    async def get_swap_chains(self) -> List[Dict]:
+        """Get supported blockchains for cross-chain swaps."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(f"{self._api_url}/swap/chains")
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("chains", [])
+
+    async def get_swap_quote(
+        self,
+        origin_asset: str,
+        destination_asset: str,
+        amount: str,
+        recipient: str,
+        refund_to: Optional[str] = None,
+        slippage_tolerance: int = 100,
+    ) -> Dict[str, Any]:
+        """Get a swap quote from NEAR Intents 1Click API."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                f"{self._api_url}/swap/quote",
+                json={
+                    "origin_asset": origin_asset,
+                    "destination_asset": destination_asset,
+                    "amount": amount,
+                    "recipient": recipient,
+                    "refund_to": refund_to or recipient,
+                    "slippage_tolerance": slippage_tolerance,
+                    "dry": True,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def execute_swap(
+        self,
+        origin_asset: str,
+        destination_asset: str,
+        amount: str,
+        recipient: str,
+        refund_to: Optional[str] = None,
+        slippage_tolerance: int = 100,
+    ) -> Dict[str, Any]:
+        """Execute a cross-chain swap. Returns deposit address."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                f"{self._api_url}/swap/execute",
+                json={
+                    "origin_asset": origin_asset,
+                    "destination_asset": destination_asset,
+                    "amount": amount,
+                    "recipient": recipient,
+                    "refund_to": refund_to or recipient,
+                    "slippage_tolerance": slippage_tolerance,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def get_swap_status(self, deposit_address: str) -> Dict[str, Any]:
+        """Check the status of a cross-chain swap."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(f"{self._api_url}/swap/status/{deposit_address}")
+            resp.raise_for_status()
+            return resp.json()
+
+    async def get_prediction_payment_quote(
+        self,
+        origin_asset: str,
+        amount: str,
+        refund_to: str,
+    ) -> Dict[str, Any]:
+        """Get a quote for paying for a prediction via cross-chain intent."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                f"{self._api_url}/intents/prediction/quote",
+                json={
+                    "origin_asset": origin_asset,
+                    "amount": amount,
+                    "recipient_near_account": self.config.publisher_contract,
+                    "refund_to": refund_to,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def execute_prediction_payment(
+        self,
+        origin_asset: str,
+        amount: str,
+        refund_to: str,
+    ) -> Dict[str, Any]:
+        """Execute a cross-chain prediction payment. Returns deposit address."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                f"{self._api_url}/intents/prediction/execute",
+                json={
+                    "origin_asset": origin_asset,
+                    "amount": amount,
+                    "recipient_near_account": self.config.publisher_contract,
+                    "refund_to": refund_to,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def get_agent_status(self) -> Dict[str, Any]:
+        """Get Shade Agent oracle status."""
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(f"{self._api_url}/agent/status")
+            resp.raise_for_status()
+            return resp.json()
+
     async def close(self):
         """Close the client connection."""
         if self._rpc:
@@ -298,6 +440,44 @@ class NearOracleClientSync:
     def get_contract_config(self) -> Dict[str, Any]:
         """Get contract config synchronously."""
         return self._loop.run_until_complete(self._async_client.get_contract_config())
+
+    def get_swap_tokens(self, chain: Optional[str] = None) -> List[Dict]:
+        """Get swap tokens synchronously."""
+        return self._loop.run_until_complete(self._async_client.get_swap_tokens(chain))
+
+    def get_swap_chains(self) -> List[Dict]:
+        """Get swap chains synchronously."""
+        return self._loop.run_until_complete(self._async_client.get_swap_chains())
+
+    def get_swap_quote(self, **kwargs) -> Dict[str, Any]:
+        """Get swap quote synchronously."""
+        return self._loop.run_until_complete(self._async_client.get_swap_quote(**kwargs))
+
+    def execute_swap(self, **kwargs) -> Dict[str, Any]:
+        """Execute swap synchronously."""
+        return self._loop.run_until_complete(self._async_client.execute_swap(**kwargs))
+
+    def get_swap_status(self, deposit_address: str) -> Dict[str, Any]:
+        """Check swap status synchronously."""
+        return self._loop.run_until_complete(
+            self._async_client.get_swap_status(deposit_address)
+        )
+
+    def get_prediction_payment_quote(self, **kwargs) -> Dict[str, Any]:
+        """Get prediction payment quote synchronously."""
+        return self._loop.run_until_complete(
+            self._async_client.get_prediction_payment_quote(**kwargs)
+        )
+
+    def execute_prediction_payment(self, **kwargs) -> Dict[str, Any]:
+        """Execute prediction payment synchronously."""
+        return self._loop.run_until_complete(
+            self._async_client.execute_prediction_payment(**kwargs)
+        )
+
+    def get_agent_status(self) -> Dict[str, Any]:
+        """Get agent status synchronously."""
+        return self._loop.run_until_complete(self._async_client.get_agent_status())
 
     def close(self):
         """Close the event loop."""
