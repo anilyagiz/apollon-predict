@@ -18,9 +18,8 @@ export default function HeroSection() {
   const fetchPrice = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true"
-      );
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/price/near`);
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);

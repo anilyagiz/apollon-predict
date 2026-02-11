@@ -67,7 +67,8 @@ export default function PredictionChart() {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:8000/predict', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

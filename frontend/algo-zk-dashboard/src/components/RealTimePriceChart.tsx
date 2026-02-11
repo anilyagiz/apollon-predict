@@ -53,16 +53,21 @@ export default function RealTimePriceChart() {
   const [isLive, setIsLive] = useState(true);
   const [lastPrice, setLastPrice] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPriceRef = useRef<number>(0);
+  const volumeDataRef = useRef<VolumeData>(volumeData);
 
-  // Fetch NEAR data from CoinGecko
+  // Keep refs in sync with state
+  useEffect(() => { lastPriceRef.current = lastPrice; }, [lastPrice]);
+  useEffect(() => { volumeDataRef.current = volumeData; }, [volumeData]);
+
+  // Fetch NEAR data via backend API (proxies CoinGecko, with fallback)
   const fetchRealTimeData = useCallback(async () => {
     try {
-      const response = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true"
-      );
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/price/near`);
 
       if (!response.ok) {
-        throw new Error(`CoinGecko API error: ${response.status}`);
+        throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -73,8 +78,9 @@ export default function RealTimePriceChart() {
 
       const now = new Date();
       const currentPrice = data.near.usd;
-      const change = currentPrice - lastPrice;
-      const changePercent = lastPrice > 0 ? (change / lastPrice) * 100 : data.near.usd_24h_change || 0;
+      const prevPrice = lastPriceRef.current;
+      const change = currentPrice - prevPrice;
+      const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : data.near.usd_24h_change || 0;
 
       const realVolume = data.near.usd_24h_vol || 0;
       const realMarketCap = data.near.usd_market_cap || 0;
@@ -122,8 +128,8 @@ export default function RealTimePriceChart() {
           minute: "2-digit",
           second: "2-digit",
         }),
-        price: lastPrice || 0.205, // Use last known price
-        volume: volumeData.volume24h || 0,
+        price: lastPriceRef.current || 0.205, // Use last known price
+        volume: volumeDataRef.current.volume24h || 0,
         change: 0,
         changePercent: 0,
         sources: 0, // Indicates error state
@@ -135,7 +141,7 @@ export default function RealTimePriceChart() {
         return updated.slice(-360);
       });
     }
-  }, [lastPrice, priceHistory.length, volumeData]);
+  }, []);
 
   // Start/stop live updates
   useEffect(() => {
