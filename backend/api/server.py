@@ -14,6 +14,7 @@ from datetime import datetime
 import logging
 import numpy as np
 import pandas as pd
+import httpx
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -410,10 +411,13 @@ async def get_prediction_with_zk_proof(request: PredictionRequest):
             recent_data = generate_mock_historical_data(30)
 
         if pred and hasattr(pred, "predict") and pred.is_trained:
+            if recent_data is None:
+                recent_data = []
             prediction = await pred.predict(recent_data, request.timeframe)
         else:
             current_price = recent_data[-1]["price"] if recent_data else 0.20
             prediction = generate_mock_prediction(current_price)
+
 
         # Add ZK proof (mock for development)
         zk_response = {
@@ -487,6 +491,51 @@ async def verify_zk_proof(proof_data: Dict[str, Any]):
     except Exception as e:
         logger.error(f"❌ ZK proof verification error: {e}")
         raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+
+
+@app.get("/price/near")
+async def get_near_price():
+    """Proxy NEAR price data from CoinGecko (avoids browser CORS/rate-limit issues)"""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://api.coingecko.com/api/v3/simple/price",
+                params={
+                    "ids": "near",
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true",
+                    "include_24hr_vol": "true",
+                    "include_market_cap": "true",
+                },
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data and "near" in data:
+                    return {
+                        "near": data["near"],
+                        "timestamp": datetime.now().isoformat(),
+                        "source": "coingecko",
+                    }
+
+        # Fallback mock data
+        logger.warning("⚠️ CoinGecko API unavailable, returning mock NEAR price")
+    except Exception as e:
+        logger.warning(f"⚠️ CoinGecko fetch failed: {e}")
+
+    # Return realistic mock data as fallback
+    base_price = 3.45 + np.random.uniform(-0.05, 0.05)
+    return {
+        "near": {
+            "usd": round(base_price, 6),
+            "usd_24h_change": round(np.random.uniform(-3.0, 3.0), 4),
+            "usd_24h_vol": round(np.random.uniform(150_000_000, 300_000_000), 2),
+            "usd_market_cap": round(base_price * 1_200_000_000, 2),
+        },
+        "timestamp": datetime.now().isoformat(),
+        "source": "mock",
+    }
 
 
 @app.get("/price/current")
@@ -654,6 +703,296 @@ async def get_model_status():
     except Exception as e:
         logger.error(f"❌ Failed to get model status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# NEAR Intents - Token Swap / Bridge Endpoints
+# =============================================================================
+
+# Lazy-init intents service
+_intents_service = None
+
+
+def get_intents_service():
+    global _intents_service
+    if _intents_service is None:
+        try:
+            from intents_service import IntentsService
+
+            api_key = os.environ.get("NEAR_INTENTS_API_KEY")
+            _intents_service = IntentsService(api_key=api_key)
+            logger.info("✓ Intents service initialized")
+        except Exception as e:
+            logger.warning(f"⚠ Intents service not available: {e}")
+    return _intents_service
+
+
+class SwapQuoteRequest(BaseModel):
+    origin_asset: str
+    destination_asset: str
+    amount: str
+    recipient: str
+    refund_to: str = ""
+    swap_type: str = "EXACT_INPUT"
+    slippage_tolerance: int = 100
+    dry: bool = True
+
+
+class SwapExecuteRequest(BaseModel):
+    origin_asset: str
+    destination_asset: str
+    amount: str
+    recipient: str
+    refund_to: str = ""
+    swap_type: str = "EXACT_INPUT"
+    slippage_tolerance: int = 100
+
+
+class DepositSubmitRequest(BaseModel):
+    tx_hash: str
+    deposit_address: str
+    near_sender_account: Optional[str] = None
+
+
+class IntentPredictionQuoteRequest(BaseModel):
+    origin_asset: str
+    amount: str
+    recipient_near_account: str
+    refund_to: str
+
+
+@app.get("/swap/tokens")
+async def get_swap_tokens(chain: Optional[str] = None):
+    """Get supported tokens for cross-chain swaps, optionally filtered by chain."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        if chain:
+            tokens = await svc.get_tokens_by_chain(chain)
+        else:
+            tokens = await svc.get_supported_tokens()
+        return {"tokens": tokens, "count": len(tokens), "timestamp": datetime.now().isoformat()}
+    except Exception as e:
+        logger.error(f"Failed to fetch swap tokens: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.get("/swap/chains")
+async def get_swap_chains():
+    """Get list of supported blockchains for swaps."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        chains = await svc.get_supported_chains()
+        return {"chains": chains, "count": len(chains), "timestamp": datetime.now().isoformat()}
+    except Exception as e:
+        logger.error(f"Failed to fetch chains: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.post("/swap/quote")
+async def get_swap_quote(request: SwapQuoteRequest):
+    """Get a swap quote from NEAR Intents 1Click API."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        quote = await svc.request_quote(
+            origin_asset=request.origin_asset,
+            destination_asset=request.destination_asset,
+            amount=request.amount,
+            swap_type=request.swap_type,
+            slippage_tolerance=request.slippage_tolerance,
+            recipient=request.recipient,
+            refund_to=request.refund_to,
+            dry=request.dry,
+        )
+        return quote
+    except Exception as e:
+        logger.error(f"Swap quote failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.post("/swap/execute")
+async def execute_swap(request: SwapExecuteRequest):
+    """Execute a cross-chain swap. Returns deposit address for the user."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        result = await svc.execute_swap(
+            origin_asset=request.origin_asset,
+            destination_asset=request.destination_asset,
+            amount=request.amount,
+            recipient=request.recipient,
+            refund_to=request.refund_to,
+            swap_type=request.swap_type,
+            slippage_tolerance=request.slippage_tolerance,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Swap execution failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.get("/swap/status/{deposit_address}")
+async def get_swap_status(deposit_address: str):
+    """Check the status of a cross-chain swap."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        status = await svc.get_swap_status(deposit_address)
+        return status
+    except Exception as e:
+        logger.error(f"Swap status check failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.post("/swap/deposit")
+async def submit_swap_deposit(request: DepositSubmitRequest):
+    """Submit deposit tx hash to speed up swap processing."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        result = await svc.submit_deposit(
+            tx_hash=request.tx_hash,
+            deposit_address=request.deposit_address,
+            near_sender_account=request.near_sender_account,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Deposit submit failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# =============================================================================
+# NEAR Intents - Prediction Payment Endpoints
+# =============================================================================
+
+
+@app.post("/intents/prediction/quote")
+async def get_prediction_payment_quote(request: IntentPredictionQuoteRequest):
+    """Get a quote for paying for an oracle prediction via cross-chain intent."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        quote = await svc.request_prediction_payment_quote(
+            origin_asset=request.origin_asset,
+            amount=request.amount,
+            recipient_near_account=request.recipient_near_account,
+            refund_to=request.refund_to,
+        )
+        return quote
+    except Exception as e:
+        logger.error(f"Prediction payment quote failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.post("/intents/prediction/execute")
+async def execute_prediction_payment(request: IntentPredictionQuoteRequest):
+    """Execute a cross-chain prediction payment. Returns deposit address."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        result = await svc.execute_prediction_payment(
+            origin_asset=request.origin_asset,
+            amount=request.amount,
+            recipient_near_account=request.recipient_near_account,
+            refund_to=request.refund_to,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Prediction payment execution failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.get("/intents/status/{deposit_address}")
+async def get_intent_status(deposit_address: str):
+    """Check status of an intent-based prediction payment."""
+    svc = get_intents_service()
+    if not svc:
+        raise HTTPException(status_code=503, detail="Intents service not available")
+    try:
+        return await svc.get_swap_status(deposit_address)
+    except Exception as e:
+        logger.error(f"Intent status check failed: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# =============================================================================
+# Shade Agent Status Endpoints
+# =============================================================================
+
+
+@app.get("/agent/status")
+async def get_agent_status():
+    """Get Shade Agent oracle status."""
+    agent_enabled = os.environ.get("SHADE_AGENT_ENABLED", "false").lower() == "true"
+    agent_endpoint = os.environ.get("SHADE_AGENT_ENDPOINT", "")
+
+    status = {
+        "enabled": agent_enabled,
+        "agent_id": os.environ.get("SHADE_AGENT_ID", ""),
+        "status": "disabled",
+        "last_fulfillment": None,
+        "total_fulfilled": 0,
+        "tee_attestation": None,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+    if agent_enabled and agent_endpoint:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"{agent_endpoint}/status")
+                if resp.status_code == 200:
+                    agent_data = resp.json()
+                    status.update(
+                        {
+                            "status": agent_data.get("status", "running"),
+                            "last_fulfillment": agent_data.get("last_fulfillment"),
+                            "total_fulfilled": agent_data.get("total_fulfilled", 0),
+                            "tee_attestation": agent_data.get("tee_attestation"),
+                            "chains": agent_data.get("chains", ["near"]),
+                        }
+                    )
+        except Exception as e:
+            logger.warning(f"Could not reach shade agent: {e}")
+            status["status"] = "unreachable"
+
+    return status
+
+
+@app.get("/agent/attestation")
+async def get_agent_attestation():
+    """Get Shade Agent TEE remote attestation data."""
+    agent_endpoint = os.environ.get("SHADE_AGENT_ENDPOINT", "")
+
+    if not agent_endpoint:
+        return {
+            "available": False,
+            "message": "Shade agent not configured",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{agent_endpoint}/attestation")
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"Could not fetch attestation: {e}")
+
+    return {
+        "available": False,
+        "message": "Could not reach shade agent",
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 if __name__ == "__main__":
