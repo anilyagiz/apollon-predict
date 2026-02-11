@@ -1,119 +1,167 @@
-# Apollon - ZK Oracle Oracle TypeScript SDK
+# Apollon Oracle TypeScript SDK
 
-TypeScript/JavaScript SDK for the Apollon - ZK Oracle Price Oracle system with Zero-Knowledge proof verification.
+TypeScript/JavaScript SDK for the Apollon Multichain Price Oracle on NEAR Protocol with Zero-Knowledge proof verification and cross-chain capabilities via NEAR Intents.
 
 ## Installation
 
 ```bash
-npm install @algo-zk/oracle-sdk
+npm install @apollon/oracle-sdk
 ```
 
 ## Quick Start
 
-```typescript
-import { AlgoZKOracleClient } from "@algo-zk/oracle-sdk";
+### NEAR Contract Client (Recommended)
 
-// Initialize client
+```typescript
+import { NearOracleClient } from "@apollon/oracle-sdk";
+
+const client = new NearOracleClient({
+  networkId: "testnet",
+  publisherContract: "apollon-publisher.testnet",
+  verifierContract: "apollon-verifier.testnet",
+  apiUrl: "http://localhost:8000",
+});
+
+await client.initialize();
+await client.signIn();
+
+// Request a prediction on NEAR
+const requestId = await client.requestPrediction(
+  { asset: "NEAR", timeframe: "24h", zkRequired: true },
+  "0.1" // deposit in NEAR
+);
+
+// Check result
+const result = await client.getRequest(requestId);
+console.log(`Status: ${result?.status}, Price: ${result?.predictedPrice}`);
+```
+
+### Legacy API Client
+
+```typescript
+import { AlgoZKOracleClient } from "@apollon/oracle-sdk";
+
 const client = new AlgoZKOracleClient({
   baseURL: "http://localhost:8000",
-  timeout: 30000,
-  retries: 3,
   enableZKVerification: true,
 });
 
-// Initialize ZK verification (optional)
-await client.initializeZKVerification();
-
-// Generate ZK-enhanced prediction
 const prediction = await client.predictWithZK({
-  symbol: "ALGOUSD",
+  symbol: "NEARUSD",
   timeframe: "24h",
 });
 
-console.log({
-  price: prediction.predicted_price,
-  confidence: prediction.confidence,
-  weights_hidden: prediction.privacy_status.model_weights_hidden,
-  zk_verified: prediction.zk_proof.verified,
-});
+console.log(prediction.predicted_price);
 ```
 
 ## Features
 
+- **NEAR Contract Integration**: Direct interaction with publisher/verifier contracts
+- **Cross-Chain Swaps**: Token swaps across 14+ chains via NEAR Intents
+- **Intent Payments**: Pay for predictions from any chain
 - **Zero-Knowledge Privacy**: Model weights and individual predictions remain hidden
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **ZK Proof Verification**: Client-side verification using snarkjs
+- **Agent Monitoring**: Query Shade Agent status and TEE attestation
 - **Error Handling**: Comprehensive error classification and retry logic
-- **Performance**: Optimized for browser and Node.js environments
 
 ## API Reference
 
-### AlgoZKOracleClient
+### NearOracleClient
 
-Main client class for interacting with the Apollon - ZK Oracle Oracle API.
+Main client class for NEAR Protocol interactions and cross-chain operations.
 
 #### Constructor
 
 ```typescript
-new AlgoZKOracleClient(config: SDKConfig)
+new NearOracleClient(config: NearOracleConfig)
 ```
 
 #### Configuration
 
 ```typescript
-interface SDKConfig {
-  baseURL: string; // API base URL
-  timeout?: number; // Request timeout (default: 30000ms)
-  retries?: number; // Retry attempts (default: 3)
-  retryDelay?: number; // Retry delay (default: 1000ms)
-  enableZKVerification?: boolean; // Enable ZK verification (default: true)
+interface NearOracleConfig {
+  networkId: "testnet" | "mainnet";
+  nodeUrl?: string;
+  walletUrl?: string;
+  helperUrl?: string;
+  explorerUrl?: string;
+  publisherContract: string;
+  verifierContract?: string;
+  apiUrl?: string; // Backend API URL (default: http://localhost:8000)
 }
 ```
 
+#### NEAR Contract Methods
+
+```typescript
+// Initialize and authenticate
+await client.initialize();
+await client.signIn();
+client.signOut();
+client.isSignedIn(): boolean;
+client.getAccountId(): string | null;
+
+// Prediction requests
+await client.requestPrediction(request, deposit): Promise<number>;
+await client.getRequest(requestId): Promise<PredictionResponse | null>;
+await client.getPendingRequests(limit?): Promise<PredictionResponse[]>;
+await client.cancelRequest(requestId): Promise<void>;
+await client.fulfillPrediction(requestId, price, zkProof?): Promise<void>;
+```
+
+#### Cross-Chain Swap Methods
+
+```typescript
+// Token discovery
+await client.getSwapTokens(chain?): Promise<Token[]>;
+await client.getSwapChains(): Promise<Chain[]>;
+
+// Swap execution
+await client.getSwapQuote(params): Promise<QuoteResponse>;
+await client.executeSwap(params): Promise<{ depositAddress, quote }>;
+await client.getSwapStatus(depositAddress): Promise<{ status, ... }>;
+```
+
+#### Intent Payment Methods
+
+```typescript
+// Pay for predictions from any chain
+await client.getPredictionPaymentQuote(params): Promise<QuoteResponse>;
+await client.executePredictionPayment(params): Promise<{ depositAddress, quote }>;
+```
+
+#### Agent Methods
+
+```typescript
+// Shade Agent status
+await client.getAgentStatus(): Promise<AgentStatus>;
+```
+
+### AlgoZKOracleClient (Legacy API Client)
+
+HTTP client for direct API interaction.
+
 #### Methods
 
-##### Health and Status
-
 ```typescript
-// Check API health
-await client.health(): Promise<HealthResponse>
+// Health and status
+await client.health(): Promise<HealthResponse>;
+await client.getModelStatus(): Promise<ModelStatusResponse>;
+await client.waitForModels(maxWaitTime?): Promise<boolean>;
 
-// Get model training status
-await client.getModelStatus(): Promise<ModelStatusResponse>
+// Price data
+await client.getCurrentPrice(): Promise<CurrentPriceResponse>;
+await client.getTechnicalIndicators(): Promise<TechnicalIndicatorsResponse>;
+await client.getHistoricalData(days?): Promise<HistoricalDataResponse>;
 
-// Wait for models to be ready
-await client.waitForModels(maxWaitTime?: number): Promise<boolean>
-```
-
-##### Price Data
-
-```typescript
-// Get current aggregated price
-await client.getCurrentPrice(): Promise<CurrentPriceResponse>
-
-// Get technical indicators
-await client.getTechnicalIndicators(): Promise<TechnicalIndicatorsResponse>
-
-// Get historical data
-await client.getHistoricalData(days?: number): Promise<HistoricalDataResponse>
-```
-
-##### Predictions
-
-```typescript
-// Generate standard prediction
-await client.predict(request?: PredictionRequest): Promise<PredictionResponse>
-
-// Generate ZK-enhanced prediction
-await client.predictWithZK(request?: PredictionRequest): Promise<ZKPredictionResponse>
-
-// Verify ZK proof independently
-await client.verifyZKProof(proof: any, publicSignals: string[]): Promise<boolean>
+// Predictions
+await client.predict(request?): Promise<PredictionResponse>;
+await client.predictWithZK(request?): Promise<ZKPredictionResponse>;
+await client.verifyZKProof(proof, publicSignals): Promise<boolean>;
 ```
 
 ## Error Handling
-
-The SDK provides comprehensive error handling with specific error types:
 
 ```typescript
 import {
@@ -123,7 +171,7 @@ import {
   ZKVerificationError,
   ModelNotReadyError,
   RateLimitError,
-} from "@algo-zk/oracle-sdk";
+} from "@apollon/oracle-sdk";
 
 try {
   const prediction = await client.predictWithZK();
@@ -133,115 +181,84 @@ try {
     await client.waitForModels();
   } else if (error instanceof NetworkError) {
     console.log("Network error, retrying...");
-  } else {
-    console.error("Unexpected error:", error.message);
   }
 }
-```
-
-## ZK Proof Verification
-
-The SDK includes built-in ZK proof verification capabilities:
-
-```typescript
-import { ZKVerifier } from "@algo-zk/oracle-sdk";
-
-const verifier = new ZKVerifier();
-
-// Load verification key
-await verifier.loadVerificationKey(
-  "http://localhost:8000/verification_key.json"
-);
-
-// Verify proof
-const verified = await verifier.verifyProof(zkProof);
-
-// Verify prediction consistency
-const consistent = verifier.verifyPredictionConsistency(
-  predictedPrice,
-  publicSignals
-);
-
-// Complete verification
-const result = await verifier.verifyComplete(zkProof, predictedPrice);
-console.log({
-  proofValid: result.proofValid,
-  dataConsistent: result.dataConsistent,
-  overallValid: result.overallValid,
-});
 ```
 
 ## Examples
 
-### Basic Usage
+### Cross-Chain Swap
 
 ```typescript
-import { AlgoZKOracleClient } from "@algo-zk/oracle-sdk";
+import { NearOracleClient } from "@apollon/oracle-sdk";
 
-const client = new AlgoZKOracleClient({
-  baseURL: "http://localhost:8000",
+const client = new NearOracleClient({
+  networkId: "testnet",
+  publisherContract: "apollon-publisher.testnet",
+  apiUrl: "http://localhost:8000",
 });
 
-// Check if models are ready
-const health = await client.health();
-if (!health.models_trained) {
-  await client.waitForModels(60000); // Wait up to 1 minute
-}
+await client.initialize();
 
-// Get current price
-const price = await client.getCurrentPrice();
-console.log(`Current ALGO price: $${price.price}`);
+// Get available chains and tokens
+const chains = await client.getSwapChains();
+console.log("Supported chains:", chains.map((c) => c.name));
 
-// Generate prediction
-const prediction = await client.predict({
-  symbol: "ALGOUSD",
-  timeframe: "24h",
+const nearTokens = await client.getSwapTokens("near");
+console.log("NEAR tokens:", nearTokens.map((t) => t.symbol));
+
+// Get a swap quote (NEAR -> Solana)
+const quote = await client.getSwapQuote({
+  originAsset: "nep141:wrap.near",
+  destinationAsset: "solana:native",
+  amount: "1000000000000000000000000", // 1 NEAR in yocto
+  recipient: "YourSolanaAddress",
 });
 
-console.log(`Predicted price: $${prediction.predicted_price}`);
-console.log(`Confidence: ${(prediction.confidence * 100).toFixed(1)}%`);
+console.log("You receive:", quote.quote?.amountOutFormatted);
+
+// Execute the swap
+const swap = await client.executeSwap({
+  originAsset: "nep141:wrap.near",
+  destinationAsset: "solana:native",
+  amount: "1000000000000000000000000",
+  recipient: "YourSolanaAddress",
+});
+
+console.log("Deposit to:", swap.depositAddress);
+
+// Poll for completion
+let status;
+do {
+  await new Promise((r) => setTimeout(r, 5000));
+  status = await client.getSwapStatus(swap.depositAddress);
+  console.log("Status:", status.status);
+} while (status.status !== "SUCCESS" && status.status !== "FAILED");
 ```
 
-### Advanced ZK Usage
+### Intent-Based Prediction Payment
 
 ```typescript
-// Generate ZK-enhanced prediction with full verification
-const zkPrediction = await client.predictWithZK();
-
-console.log("Privacy Status:", {
-  model_weights_hidden: zkPrediction.privacy_status.model_weights_hidden,
-  predictions_hidden: zkPrediction.privacy_status.individual_predictions_hidden,
-  circuit_verified: zkPrediction.privacy_status.circuit_verified,
+// Pay for a prediction from any chain
+const payment = await client.executePredictionPayment({
+  originAsset: "nep141:usdt.tether-token.near",
+  amount: "1000000", // 1 USDT
+  refundTo: "your-account.near",
 });
 
-// Verify the proof independently
-const verified = await client.verifyZKProof(
-  zkPrediction.zk_proof.proof,
-  zkPrediction.zk_proof.public_signals
-);
-
-console.log(`ZK Proof verified: ${verified}`);
+console.log("Send payment to:", payment.depositAddress);
 ```
 
-### Error Handling with Retries
+### Oracle Agent Monitoring
 
 ```typescript
-import { withRetry, isRetryableError } from "@algo-zk/oracle-sdk";
-
-try {
-  const prediction = await withRetry(() => client.predictWithZK(), {
-    maxAttempts: 5,
-    delay: 2000,
-  });
-
-  console.log("Prediction successful:", prediction.predicted_price);
-} catch (error) {
-  if (isRetryableError(error)) {
-    console.log("Retryable error occurred, but max attempts reached");
-  } else {
-    console.log("Non-retryable error:", error.message);
-  }
-}
+const agentStatus = await client.getAgentStatus();
+console.log({
+  running: agentStatus.status === "running",
+  fulfilled: agentStatus.total_fulfilled,
+  tee: agentStatus.tee_attestation ? "Attested" : "Development",
+  chains: agentStatus.chains,
+});
 ```
 
 ## Development

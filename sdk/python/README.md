@@ -1,11 +1,11 @@
-# Apollon - ZK Oracle Oracle Python SDK
+# Apollon Oracle Python SDK
 
-Python SDK for the Apollon - ZK Oracle Price Oracle system with Zero-Knowledge proof verification.
+Python SDK for the Apollon Multichain Price Oracle on NEAR Protocol with Zero-Knowledge proof verification and cross-chain capabilities via NEAR Intents.
 
 ## Installation
 
 ```bash
-pip install algo-zk-oracle-sdk
+pip install apollon-oracle-sdk
 ```
 
 ## Quick Start
@@ -14,24 +14,36 @@ pip install algo-zk-oracle-sdk
 
 ```python
 import asyncio
-from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
+from apollon_near_sdk import NearOracleClient, NearOracleConfig
 
 async def main():
-    config = SDKConfig(
-        base_url="http://localhost:8000",
-        timeout=30.0,
-        retries=3,
-        enable_zk_verification=True,
+    config = NearOracleConfig(
+        publisher_contract="apollon-publisher.testnet",
+        api_url="http://localhost:8000",
     )
 
-    async with AlgoZKOracleClient(config) as client:
-        # Generate ZK-enhanced prediction
-        prediction = await client.predict_with_zk()
+    client = NearOracleClient(config)
+    await client.initialize()
 
-        print(f"Predicted price: ${prediction.predicted_price:.6f}")
-        print(f"Confidence: {prediction.confidence:.2%}")
-        print(f"Model weights hidden: {prediction.privacy_status.model_weights_hidden}")
-        print(f"ZK proof verified: {prediction.zk_proof.verified}")
+    # Get pending prediction requests
+    requests = await client.get_pending_requests(limit=5)
+    for r in requests:
+        print(f"Request #{r.request_id}: {r.asset} / {r.timeframe} ({r.status})")
+
+    # Cross-chain swap quote
+    quote = await client.get_swap_quote(
+        origin_asset="nep141:wrap.near",
+        destination_asset="solana:native",
+        amount="1000000000000000000000000",
+        recipient="YourSolanaAddress",
+    )
+    print(f"You receive: {quote['quote']['amountOutFormatted']}")
+
+    # Agent status
+    agent = await client.get_agent_status()
+    print(f"Agent: {agent['status']}, Fulfilled: {agent['total_fulfilled']}")
+
+    await client.close()
 
 asyncio.run(main())
 ```
@@ -39,128 +51,191 @@ asyncio.run(main())
 ### Synchronous Usage
 
 ```python
-from algo_zk_oracle.client.oracle_client import AlgoZKOracleClientSync
-from algo_zk_oracle import SDKConfig
+from apollon_near_sdk import NearOracleClientSync, NearOracleConfig
 
-config = SDKConfig(base_url="http://localhost:8000")
-client = AlgoZKOracleClientSync(config)
+config = NearOracleConfig(
+    publisher_contract="apollon-publisher.testnet",
+    api_url="http://localhost:8000",
+)
+
+client = NearOracleClientSync(config)
+client.initialize()
 
 try:
-    # Check health
-    health = client.health()
-    print(f"API Status: {health.status}")
+    # Get pending requests
+    requests = client.get_pending_requests(limit=5)
+    for r in requests:
+        print(f"#{r.request_id}: {r.asset} ({r.status})")
 
-    # Generate prediction
-    prediction = client.predict()
-    print(f"Predicted price: ${prediction.predicted_price:.6f}")
+    # Get swap chains
+    chains = client.get_swap_chains()
+    print(f"Supported chains: {[c['name'] for c in chains]}")
 
+    # Agent status
+    agent = client.get_agent_status()
+    print(f"Agent: {agent['status']}")
 finally:
     client.close()
 ```
 
+### Legacy API Client
+
+```python
+import asyncio
+from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
+
+async def main():
+    config = SDKConfig(base_url="http://localhost:8000")
+
+    async with AlgoZKOracleClient(config) as client:
+        prediction = await client.predict_with_zk()
+        print(f"Predicted price: ${prediction.predicted_price:.6f}")
+
+asyncio.run(main())
+```
+
 ## Features
 
-- **Zero-Knowledge Privacy**: Model weights and individual predictions remain hidden
+- **NEAR Contract Integration**: Read prediction requests and contract state via RPC
+- **Cross-Chain Swaps**: Token swaps across 14+ chains via NEAR Intents
+- **Intent Payments**: Pay for predictions from any chain
+- **Zero-Knowledge Privacy**: Model weights and predictions remain hidden
 - **Type Safety**: Full Pydantic model support with type validation
 - **Async/Sync Support**: Both asynchronous and synchronous client interfaces
+- **Agent Monitoring**: Query Shade Agent status and TEE attestation
 - **Error Handling**: Comprehensive error classification and retry logic
 - **Python 3.8+**: Compatible with modern Python versions
 
 ## API Reference
 
-### AlgoZKOracleClient (Async)
+### NearOracleClient (NEAR + Intents)
 
-Main async client class for interacting with the Apollon - ZK Oracle Oracle API.
-
-#### Usage as Context Manager
-
-```python
-async with AlgoZKOracleClient(config) as client:
-    result = await client.predict()
-```
+Primary client for NEAR contract interactions and cross-chain operations.
 
 #### Configuration
 
 ```python
-from algo_zk_oracle import SDKConfig
+from apollon_near_sdk import NearOracleConfig
 
-config = SDKConfig(
-    base_url="http://localhost:8000",      # API base URL
-    timeout=30.0,                          # Request timeout in seconds
-    retries=3,                             # Number of retry attempts
-    retry_delay=1.0,                       # Delay between retries
-    enable_zk_verification=True,           # Enable ZK verification
+config = NearOracleConfig(
+    network_id="testnet",                                     # NEAR network
+    node_url="https://rpc.testnet.near.org",                  # NEAR RPC URL
+    publisher_contract="apollon-publisher.testnet",            # Publisher contract
+    verifier_contract="apollon-verifier.testnet",              # Verifier contract
+    api_url="http://localhost:8000",                           # Backend API URL
 )
 ```
 
-#### Methods
-
-##### Health and Status
+#### NEAR Contract Methods
 
 ```python
-# Check API health
-health = await client.health()
+# Initialize client
+client = NearOracleClient(config)
+await client.initialize(account_id="optional-account.near")
 
-# Get model training status
-status = await client.get_model_status()
+# Read prediction requests
+request = await client.get_request(request_id=42)
+pending = await client.get_pending_requests(limit=10)
+contract_config = await client.get_contract_config()
 
-# Wait for models to be ready
-ready = await client.wait_for_models(max_wait_time=300.0)
+# Close client
+await client.close()
 ```
 
-##### Price Data
+#### Cross-Chain Swap Methods
 
 ```python
-# Get current aggregated price
-price = await client.get_current_price()
+# Token discovery
+tokens = await client.get_swap_tokens(chain="near")
+chains = await client.get_swap_chains()
 
-# Get technical indicators
-technicals = await client.get_technical_indicators()
+# Swap execution
+quote = await client.get_swap_quote(
+    origin_asset="nep141:wrap.near",
+    destination_asset="solana:native",
+    amount="1000000000000000000000000",
+    recipient="YourSolanaAddress",
+    slippage_tolerance=100,  # 1% in basis points
+)
 
-# Get historical data
-historical = await client.get_historical_data(days=30)
+result = await client.execute_swap(
+    origin_asset="nep141:wrap.near",
+    destination_asset="solana:native",
+    amount="1000000000000000000000000",
+    recipient="YourSolanaAddress",
+)
+print(f"Deposit to: {result['quote']['depositAddress']}")
+
+# Check status
+status = await client.get_swap_status(deposit_address)
 ```
 
-##### Predictions
+#### Intent Payment Methods
 
 ```python
-from algo_zk_oracle import PredictionRequest
+# Pay for predictions from any chain
+quote = await client.get_prediction_payment_quote(
+    origin_asset="nep141:usdt.tether-token.near",
+    amount="1000000",
+    refund_to="your-account.near",
+)
 
-# Generate standard prediction
-prediction = await client.predict(PredictionRequest(
-    symbol="ALGOUSD",
-    timeframe="24h",
-    include_confidence=True,
-))
-
-# Generate ZK-enhanced prediction
-zk_prediction = await client.predict_with_zk()
-
-# Verify ZK proof independently
-verified = await client.verify_zk_proof(proof, public_signals)
+result = await client.execute_prediction_payment(
+    origin_asset="nep141:usdt.tether-token.near",
+    amount="1000000",
+    refund_to="your-account.near",
+)
 ```
 
-### AlgoZKOracleClientSync (Sync)
-
-Synchronous wrapper providing the same interface without async/await.
+#### Agent Methods
 
 ```python
-from algo_zk_oracle.client.oracle_client import AlgoZKOracleClientSync
+# Shade Agent status
+agent = await client.get_agent_status()
+print(f"Status: {agent['status']}")
+print(f"Fulfilled: {agent['total_fulfilled']}")
+print(f"TEE: {agent.get('tee_attestation', 'N/A')}")
+```
 
-client = AlgoZKOracleClientSync(config)
+### NearOracleClientFull (with Signing)
 
-# All methods are synchronous
-health = client.health()
-prediction = client.predict()
-zk_prediction = client.predict_with_zk()
+Extended client with transaction signing capabilities for solvers/agents.
 
-# Remember to close
-client.close()
+```python
+from apollon_near_sdk import NearOracleClientFull
+
+client = NearOracleClientFull(config)
+await client.initialize_with_signer(
+    account_id="solver.near",
+    private_key="ed25519:YOUR_PRIVATE_KEY",
+)
+
+# Fulfill a prediction
+await client.fulfill_prediction(
+    request_id=42,
+    predicted_price=520_000,  # $5.20 with 6 decimals
+    zk_proof=proof_bytes,
+)
+```
+
+### AlgoZKOracleClient (Legacy API Client)
+
+HTTP client for direct API interaction with ML prediction endpoints.
+
+```python
+from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
+
+config = SDKConfig(base_url="http://localhost:8000")
+
+async with AlgoZKOracleClient(config) as client:
+    health = await client.health()
+    price = await client.get_current_price()
+    prediction = await client.predict()
+    zk_prediction = await client.predict_with_zk()
+    status = await client.get_model_status()
 ```
 
 ## Error Handling
-
-The SDK provides comprehensive error handling with specific exception types:
 
 ```python
 from algo_zk_oracle import (
@@ -179,147 +254,83 @@ except ModelNotReadyError:
     await client.wait_for_models()
 except NetworkError as e:
     print(f"Network error: {e.message}")
-except ValidationError as e:
-    print(f"Validation error: {e.message}")
 except AlgoZKOracleError as e:
     print(f"SDK error [{e.code}]: {e.message}")
 ```
 
-## Data Models
-
-All responses use Pydantic models for type safety:
-
-```python
-from algo_zk_oracle import (
-    PredictionResponse,
-    ZKPredictionResponse,
-    CurrentPriceResponse,
-    TechnicalIndicatorsResponse,
-    HealthResponse,
-)
-
-# Type hints work automatically
-prediction: PredictionResponse = await client.predict()
-print(f"Price: {prediction.predicted_price}")
-print(f"Confidence: {prediction.confidence}")
-
-# Access nested models
-print(f"LSTM prediction: {prediction.individual_predictions.lstm}")
-print(f"Model weights: {prediction.model_weights}")
-```
-
 ## Examples
 
-### Basic Price Monitoring
+### Cross-Chain Swap
 
 ```python
-import asyncio
-from algo_zk_oracle import AlgoZKOracleClient, SDKConfig
-
-async def monitor_price():
-    config = SDKConfig(base_url="http://localhost:8000")
-
-    async with AlgoZKOracleClient(config) as client:
-        # Wait for models
-        await client.wait_for_models()
-
-        while True:
-            try:
-                # Get current price
-                current = await client.get_current_price()
-                print(f"Current: ${current.price:.6f} ({current.confidence:.1%})")
-
-                # Get prediction
-                prediction = await client.predict()
-                change = prediction.price_change_percent
-                direction = "↑" if change > 0 else "↓"
-
-                print(f"24h Prediction: ${prediction.predicted_price:.6f} {direction}{abs(change):.2f}%")
-                print(f"Confidence: {prediction.confidence:.1%}")
-                print("-" * 50)
-
-                await asyncio.sleep(60)  # Check every minute
-
-            except Exception as e:
-                print(f"Error: {e}")
-                await asyncio.sleep(10)
-
-asyncio.run(monitor_price())
-```
-
-### ZK Privacy Analysis
-
-```python
-async def analyze_zk_privacy():
-    config = SDKConfig(base_url="http://localhost:8000")
-
-    async with AlgoZKOracleClient(config) as client:
-        # Generate both standard and ZK predictions
-        standard = await client.predict()
-        zk_enhanced = await client.predict_with_zk()
-
-        print("Standard Prediction:")
-        print(f"  Predicted Price: ${standard.predicted_price:.6f}")
-        print(f"  Model Weights Visible: {standard.model_weights}")
-        print(f"  Individual Predictions: {standard.individual_predictions}")
-
-        print("\\nZK-Enhanced Prediction:")
-        print(f"  Predicted Price: ${zk_enhanced.predicted_price:.6f}")
-        print(f"  Model Weights Hidden: {zk_enhanced.privacy_status.model_weights_hidden}")
-        print(f"  Individual Predictions Hidden: {zk_enhanced.privacy_status.individual_predictions_hidden}")
-        print(f"  ZK Proof Verified: {zk_enhanced.zk_proof.verified}")
-        print(f"  Circuit Hash: {zk_enhanced.privacy_status.circuit_hash}")
-```
-
-### Error Handling with Retries
-
-```python
-from algo_zk_oracle.utils.retry import retry_async_func, RetryConfig
-
-async def robust_prediction():
-    config = SDKConfig(base_url="http://localhost:8000")
-
-    # Custom retry configuration
-    retry_config = RetryConfig(
-        max_attempts=5,
-        delay=2.0,
-        backoff_factor=2.0,
-        max_delay=30.0,
+async def cross_chain_swap():
+    config = NearOracleConfig(
+        publisher_contract="apollon-publisher.testnet",
+        api_url="http://localhost:8000",
     )
+    client = NearOracleClient(config)
+    await client.initialize()
 
-    async with AlgoZKOracleClient(config) as client:
-        # Use manual retry for specific operations
-        prediction = await retry_async_func(
-            client.predict_with_zk,
-            retry_config
-        )
+    # Get available chains
+    chains = await client.get_swap_chains()
+    print("Supported chains:", [c["name"] for c in chains])
 
-        print(f"Prediction successful: ${prediction.predicted_price:.6f}")
+    # Quote NEAR -> Solana USDT
+    quote = await client.get_swap_quote(
+        origin_asset="nep141:wrap.near",
+        destination_asset="solana:es9vmfrzacermjfrf4h2fyd4kconky11mcce8benwnyb",
+        amount="5000000000000000000000000",  # 5 NEAR
+        recipient="YourSolanaAddress",
+    )
+    print(f"You receive: {quote['quote']['amountOutFormatted']} USDT")
+
+    # Execute
+    result = await client.execute_swap(
+        origin_asset="nep141:wrap.near",
+        destination_asset="solana:es9vmfrzacermjfrf4h2fyd4kconky11mcce8benwnyb",
+        amount="5000000000000000000000000",
+        recipient="YourSolanaAddress",
+    )
+    deposit_addr = result["quote"]["depositAddress"]
+    print(f"Deposit to: {deposit_addr}")
+
+    # Poll for completion
+    import time
+    while True:
+        status = await client.get_swap_status(deposit_addr)
+        print(f"Status: {status['status']}")
+        if status["status"] in ("SUCCESS", "FAILED", "REFUNDED"):
+            break
+        time.sleep(5)
+
+    await client.close()
 ```
 
-### Batch Data Analysis
+### Price Monitoring with Predictions
 
 ```python
-async def batch_analysis():
-    config = SDKConfig(base_url="http://localhost:8000")
+async def monitor():
+    config = NearOracleConfig(
+        publisher_contract="apollon-publisher.testnet",
+        api_url="http://localhost:8000",
+    )
+    client = NearOracleClient(config)
+    await client.initialize()
 
-    async with AlgoZKOracleClient(config) as client:
-        # Gather multiple data points
-        health, current_price, technicals, historical = await asyncio.gather(
-            client.health(),
-            client.get_current_price(),
-            client.get_technical_indicators(),
-            client.get_historical_data(days=7),
-        )
+    # Check pending predictions
+    pending = await client.get_pending_requests(limit=10)
+    print(f"Pending requests: {len(pending)}")
 
-        print(f"System Health: {health.status}")
-        print(f"Current Price: ${current_price.price:.6f}")
-        print(f"RSI: {technicals.indicators.rsi:.2f}")
-        print(f"7-day data points: {len(historical.data)}")
+    for req in pending:
+        print(f"  #{req.request_id}: {req.asset}/{req.timeframe} - {req.status}")
 
-        # Generate prediction with all context
-        prediction = await client.predict_with_zk()
-        print(f"ZK Prediction: ${prediction.predicted_price:.6f}")
+    # Check agent
+    agent = await client.get_agent_status()
+    print(f"Oracle Agent: {agent['status']}")
+    print(f"  Total fulfilled: {agent['total_fulfilled']}")
+    print(f"  Chains: {agent.get('chains', ['near'])}")
+
+    await client.close()
 ```
 
 ## Development
@@ -327,8 +338,8 @@ async def batch_analysis():
 ### Setup Development Environment
 
 ```bash
-git clone https://github.com/oguzhaangumuss/algo-price-predict
-cd algo-price-predict/sdk/python
+git clone https://github.com/YourOrg/near-apollon
+cd near-apollon/sdk/python
 
 # Install in development mode
 pip install -e .[dev]
@@ -343,14 +354,14 @@ pytest
 ### Code Formatting
 
 ```bash
-black algo_zk_oracle/
-isort algo_zk_oracle/
+black apollon_near_sdk/ algo_zk_oracle/
+isort apollon_near_sdk/ algo_zk_oracle/
 ```
 
 ### Type Checking
 
 ```bash
-mypy algo_zk_oracle/
+mypy apollon_near_sdk/ algo_zk_oracle/
 ```
 
 ## License
