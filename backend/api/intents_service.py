@@ -99,9 +99,10 @@ class IntentsService:
                 if cached:
                     import json
 
-                    self._token_cache = json.loads(cached)
+                    cache_data = json.loads(cached)
+                    self._token_cache = cache_data
                     self._token_cache_time = time.time()
-                    return self._token_cache["tokens"]
+                    return cache_data["tokens"]
             except Exception as e:
                 logger.warning(f"Redis cache read failed: {e}")
 
