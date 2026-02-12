@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowDownUp,
+  ArrowLeftRight,
+  ArrowUpDown,
   Loader2,
   CheckCircle2,
   XCircle,
@@ -245,24 +246,19 @@ export default function TokenSwap() {
   );
 
   return (
-    <Card className="bg-white/5 backdrop-blur-lg border-white/10">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-          <ArrowDownUp className="w-6 h-6 text-blue-400" />
-          Token Swap
-          <Badge
-            variant="secondary"
-            className="bg-blue-500/20 text-blue-300 border-blue-500/30"
-          >
-            NEAR Intents
-          </Badge>
-        </CardTitle>
-        <p className="text-gray-400 mt-1">
-          Cross-chain swap powered by NEAR Intents - 14+ chains supported
+    <div className="pyth-card-elevated p-6">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <ArrowLeftRight className="w-6 h-6 text-purple-400" />
+          <h2 className="text-xl font-bold text-white">Token Swap</h2>
+          <span className="pyth-badge text-[11px]">NEAR Intents</span>
+        </div>
+        <p className="text-gray-500 text-sm ml-9">
+          Cross-chain swap powered by NEAR Intents — 14+ chains supported
         </p>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-6">
+      <div className="space-y-6">
         {/* Source Chain + Token */}
         <div className="space-y-3">
           <label className="text-sm text-gray-400">From</label>
@@ -274,18 +270,20 @@ export default function TokenSwap() {
                 setSourceToken("");
                 setQuote(null);
               }}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm flex-1"
+              className="bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white text-sm flex-1 focus:border-purple-500/30 focus:outline-none transition-colors"
             >
               {chains.map((c) => (
-                <option key={c.id} value={c.id} className="bg-neutral-900">
+                <option key={c.id} value={c.id} className="bg-[#1A0F2E]">
                   {c.name}
                 </option>
               ))}
               {chains.length === 0 && (
                 <>
-                  <option value="near" className="bg-neutral-900">NEAR</option>
-                  <option value="solana" className="bg-neutral-900">Solana</option>
-                  <option value="ethereum" className="bg-neutral-900">Ethereum</option>
+                  <option value="near" className="bg-[#1A0F2E]">NEAR</option>
+                  <option value="aurora" className="bg-[#1A0F2E]">Aurora</option>
+                  <option value="ethereum" className="bg-[#1A0F2E]">Ethereum</option>
+                  <option value="solana" className="bg-[#1A0F2E]">Solana</option>
+                  <option value="algorand" className="bg-[#1A0F2E]">Algorand</option>
                 </>
               )}
             </select>
@@ -296,7 +294,7 @@ export default function TokenSwap() {
                 setSourceToken(e.target.value);
                 setQuote(null);
               }}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm flex-1"
+              className="bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white text-sm flex-1 focus:border-purple-500/30 focus:outline-none transition-colors"
             >
               <option value="" className="bg-neutral-900">
                 Select token
@@ -321,7 +319,7 @@ export default function TokenSwap() {
               setQuote(null);
             }}
             placeholder="Amount (in smallest unit)"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-lg font-mono"
+            className="w-full bg-white/[0.03] border border-purple-500/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-lg font-mono focus:border-purple-500/30 focus:outline-none transition-colors"
           />
         </div>
 
@@ -331,9 +329,9 @@ export default function TokenSwap() {
             onClick={swapChains}
             variant="outline"
             size="sm"
-            className="border-white/20 text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
+            className="border-purple-500/20 text-purple-300 hover:bg-purple-500/10 rounded-full w-10 h-10 p-0"
           >
-            <ArrowDownUp className="w-4 h-4" />
+            <ArrowUpDown className="w-4 h-4" />
           </Button>
         </div>
 
@@ -348,18 +346,20 @@ export default function TokenSwap() {
                 setDestToken("");
                 setQuote(null);
               }}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm flex-1"
+              className="bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white text-sm flex-1 focus:border-purple-500/30 focus:outline-none transition-colors"
             >
               {chains.map((c) => (
-                <option key={c.id} value={c.id} className="bg-neutral-900">
+                <option key={c.id} value={c.id} className="bg-[#1A0F2E]">
                   {c.name}
                 </option>
               ))}
               {chains.length === 0 && (
                 <>
-                  <option value="near" className="bg-neutral-900">NEAR</option>
-                  <option value="solana" className="bg-neutral-900">Solana</option>
-                  <option value="ethereum" className="bg-neutral-900">Ethereum</option>
+                  <option value="near" className="bg-[#1A0F2E]">NEAR</option>
+                  <option value="aurora" className="bg-[#1A0F2E]">Aurora</option>
+                  <option value="ethereum" className="bg-[#1A0F2E]">Ethereum</option>
+                  <option value="solana" className="bg-[#1A0F2E]">Solana</option>
+                  <option value="algorand" className="bg-[#1A0F2E]">Algorand</option>
                 </>
               )}
             </select>
@@ -370,7 +370,7 @@ export default function TokenSwap() {
                 setDestToken(e.target.value);
                 setQuote(null);
               }}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm flex-1"
+              className="bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white text-sm flex-1 focus:border-purple-500/30 focus:outline-none transition-colors"
             >
               <option value="" className="bg-neutral-900">
                 Select token
@@ -392,7 +392,7 @@ export default function TokenSwap() {
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder="Recipient address"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-sm font-mono"
+            className="w-full bg-white/[0.03] border border-purple-500/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm font-mono focus:border-purple-500/30 focus:outline-none transition-colors"
           />
         </div>
 
@@ -516,7 +516,7 @@ export default function TokenSwap() {
           {swapStatus === "idle" && (
             <Button
               onClick={getQuote}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex-1 pyth-btn-primary"
               disabled={!sourceToken || !destToken || !amount || !recipient}
             >
               Get Quote
@@ -533,7 +533,7 @@ export default function TokenSwap() {
           {swapStatus === "quoted" && (
             <Button
               onClick={executeSwap}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/10"
             >
               Execute Swap
             </Button>
@@ -568,11 +568,11 @@ export default function TokenSwap() {
         </div>
 
         {/* Footer */}
-        <div className="text-xs text-gray-500 flex items-center gap-1 justify-center">
+        <div className="text-[11px] text-gray-600 flex items-center gap-1 justify-center pt-2 border-t border-purple-500/5">
           Powered by NEAR Intents 1Click API
           <ExternalLink className="w-3 h-3" />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

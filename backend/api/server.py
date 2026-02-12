@@ -538,6 +538,175 @@ async def get_near_price():
     }
 
 
+@app.get("/price/aurora")
+async def get_aurora_price():
+    """Proxy Aurora price data from CoinGecko"""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://api.coingecko.com/api/v3/simple/price",
+                params={
+                    "ids": "aurora-near",
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true",
+                    "include_24hr_vol": "true",
+                    "include_market_cap": "true",
+                },
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data and "aurora-near" in data:
+                    return {
+                        "aurora": data["aurora-near"],
+                        "timestamp": datetime.now().isoformat(),
+                        "source": "coingecko",
+                    }
+
+        logger.warning("⚠️ CoinGecko API unavailable, returning mock Aurora price")
+    except Exception as e:
+        logger.warning(f"⚠️ CoinGecko Aurora fetch failed: {e}")
+
+    # Return realistic mock data as fallback
+    base_price = 0.22 + np.random.uniform(-0.01, 0.01)
+    return {
+        "aurora": {
+            "usd": round(base_price, 6),
+            "usd_24h_change": round(np.random.uniform(-5.0, 5.0), 4),
+            "usd_24h_vol": round(np.random.uniform(5_000_000, 20_000_000), 2),
+            "usd_market_cap": round(base_price * 300_000_000, 2),
+        },
+        "timestamp": datetime.now().isoformat(),
+        "source": "mock",
+    }
+
+
+# =============================================================================
+# Generic Token Price Endpoint (ETH, SOL, ALGO, etc.)
+# =============================================================================
+
+# CoinGecko ID mapping and mock price defaults
+TOKEN_CONFIG = {
+    "near": {"coingecko_id": "near", "mock_price": 3.45, "mock_mcap_mult": 1_200_000_000, "mock_vol_range": (150_000_000, 300_000_000)},
+    "aurora": {"coingecko_id": "aurora-near", "mock_price": 0.22, "mock_mcap_mult": 300_000_000, "mock_vol_range": (5_000_000, 20_000_000)},
+    "ethereum": {"coingecko_id": "ethereum", "mock_price": 2450.0, "mock_mcap_mult": 120_000_000, "mock_vol_range": (8_000_000_000, 15_000_000_000)},
+    "solana": {"coingecko_id": "solana", "mock_price": 135.0, "mock_mcap_mult": 4_000_000, "mock_vol_range": (1_500_000_000, 3_000_000_000)},
+    "algorand": {"coingecko_id": "algorand", "mock_price": 0.21, "mock_mcap_mult": 8_000_000_000, "mock_vol_range": (30_000_000, 80_000_000)},
+}
+
+
+@app.get("/price/token/{token_id}")
+async def get_token_price(token_id: str):
+    """Get price data for any supported token via CoinGecko proxy."""
+    token_id = token_id.lower()
+    config = TOKEN_CONFIG.get(token_id)
+
+    if not config:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported token: {token_id}. Supported: {', '.join(TOKEN_CONFIG.keys())}",
+        )
+
+    coingecko_id = config["coingecko_id"]
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://api.coingecko.com/api/v3/simple/price",
+                params={
+                    "ids": coingecko_id,
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true",
+                    "include_24hr_vol": "true",
+                    "include_market_cap": "true",
+                },
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if data and coingecko_id in data:
+                    return {
+                        "token": token_id,
+                        "data": data[coingecko_id],
+                        "timestamp": datetime.now().isoformat(),
+                        "source": "coingecko",
+                    }
+
+        logger.warning(f"⚠️ CoinGecko unavailable for {token_id}, returning mock")
+    except Exception as e:
+        logger.warning(f"⚠️ CoinGecko fetch failed for {token_id}: {e}")
+
+    # Mock fallback
+    bp = config["mock_price"]
+    base_price = bp + np.random.uniform(-bp * 0.015, bp * 0.015)
+    vmin, vmax = config["mock_vol_range"]
+    return {
+        "token": token_id,
+        "data": {
+            "usd": round(base_price, 6 if base_price < 10 else 2),
+            "usd_24h_change": round(np.random.uniform(-4.0, 4.0), 4),
+            "usd_24h_vol": round(np.random.uniform(vmin, vmax), 2),
+            "usd_market_cap": round(base_price * config["mock_mcap_mult"], 2),
+        },
+        "timestamp": datetime.now().isoformat(),
+        "source": "mock",
+    }
+
+
+@app.get("/price/tokens")
+async def get_all_token_prices():
+    """Get prices for all supported tokens in a single call."""
+    coingecko_ids = ",".join(c["coingecko_id"] for c in TOKEN_CONFIG.values())
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://api.coingecko.com/api/v3/simple/price",
+                params={
+                    "ids": coingecko_ids,
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true",
+                    "include_24hr_vol": "true",
+                    "include_market_cap": "true",
+                },
+            )
+            if resp.status_code == 200:
+                raw = resp.json()
+                result = {}
+                for token_id, config in TOKEN_CONFIG.items():
+                    cg_id = config["coingecko_id"]
+                    if cg_id in raw:
+                        result[token_id] = raw[cg_id]
+                if result:
+                    return {
+                        "tokens": result,
+                        "timestamp": datetime.now().isoformat(),
+                        "source": "coingecko",
+                    }
+
+        logger.warning("⚠️ CoinGecko bulk fetch failed, returning mock data")
+    except Exception as e:
+        logger.warning(f"⚠️ Bulk price fetch failed: {e}")
+
+    # Mock fallback for all tokens
+    result = {}
+    for token_id, config in TOKEN_CONFIG.items():
+        bp = config["mock_price"]
+        base_price = bp + np.random.uniform(-bp * 0.015, bp * 0.015)
+        vmin, vmax = config["mock_vol_range"]
+        result[token_id] = {
+            "usd": round(base_price, 6 if base_price < 10 else 2),
+            "usd_24h_change": round(np.random.uniform(-4.0, 4.0), 4),
+            "usd_24h_vol": round(np.random.uniform(vmin, vmax), 2),
+            "usd_market_cap": round(base_price * config["mock_mcap_mult"], 2),
+        }
+    return {
+        "tokens": result,
+        "timestamp": datetime.now().isoformat(),
+        "source": "mock",
+    }
+
+
 @app.get("/price/current")
 async def get_current_price():
     """Get current aggregated price from multiple sources"""

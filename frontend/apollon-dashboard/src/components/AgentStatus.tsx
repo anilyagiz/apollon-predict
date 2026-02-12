@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Bot, Shield, Activity, Clock } from "lucide-react";
+import { BrainCog, ShieldCheck, Activity, Clock } from "lucide-react";
 
 interface AgentData {
   enabled: boolean;
@@ -41,89 +39,79 @@ export default function AgentStatus() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  const statusColor = {
-    running: "bg-green-500/20 text-green-300 border-green-500/30",
-    stopped: "bg-gray-500/20 text-gray-300 border-gray-500/30",
-    disabled: "bg-gray-500/20 text-gray-300 border-gray-500/30",
-    unreachable: "bg-red-500/20 text-red-300 border-red-500/30",
-    not_initialized: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+  const statusColor: Record<string, string> = {
+    running: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    stopped: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+    disabled: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+    unreachable: "bg-red-500/10 text-red-400 border-red-500/20",
+    not_initialized: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   };
 
   if (loading) return null;
 
+  const statusKey = agent?.status || "disabled";
+
   return (
-    <Card className="bg-white/5 backdrop-blur-lg border-white/10">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
-          <Bot className="w-5 h-5 text-purple-400" />
-          Oracle Agent
-          <Badge
-            variant="secondary"
-            className={
-              statusColor[
-                (agent?.status as keyof typeof statusColor) || "disabled"
-              ] || statusColor.disabled
-            }
-          >
-            {agent?.status || "disabled"}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
+    <div className="pyth-card p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <BrainCog className="w-5 h-5 text-purple-400" />
+        <h3 className="text-base font-bold text-white">Oracle Agent</h3>
+        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ml-auto ${statusColor[statusKey] || statusColor.disabled}`}>
+          {statusKey}
+        </span>
+      </div>
 
-      <CardContent className="space-y-3">
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/5 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
-              <Activity className="w-3 h-3" />
-              Predictions Fulfilled
-            </div>
-            <p className="text-2xl font-bold text-white">
-              {agent?.total_fulfilled || 0}
-            </p>
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-white/[0.02] border border-purple-500/8 p-3">
+          <div className="flex items-center gap-1.5 text-gray-500 text-[11px] mb-1 font-medium">
+            <Activity className="w-3 h-3" />
+            Predictions Fulfilled
           </div>
-
-          <div className="bg-white/5 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
-              <Shield className="w-3 h-3" />
-              TEE Status
-            </div>
-            <p className="text-sm font-medium text-white">
-              {agent?.tee_attestation ? "Attested" : "Development"}
-            </p>
-          </div>
+          <p className="pyth-stat-number text-2xl">
+            {agent?.total_fulfilled || 0}
+          </p>
         </div>
 
-        {/* Chains */}
-        {agent?.chains && agent.chains.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Chains:</span>
-            {agent.chains.map((chain) => (
-              <Badge
-                key={chain}
-                variant="secondary"
-                className="bg-white/5 text-gray-300 text-xs"
-              >
-                {chain}
-              </Badge>
-            ))}
+        <div className="rounded-xl bg-white/[0.02] border border-purple-500/8 p-3">
+          <div className="flex items-center gap-1.5 text-gray-500 text-[11px] mb-1 font-medium">
+            <ShieldCheck className="w-3 h-3" />
+            TEE Status
           </div>
-        )}
-
-        {/* Last fulfillment */}
-        {agent?.last_fulfillment && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Clock className="w-3 h-3" />
-            Last fulfilled: {new Date(agent.last_fulfillment).toLocaleString()}
-          </div>
-        )}
-
-        {!agent?.enabled && (
-          <p className="text-xs text-gray-500 italic">
-            Shade Agent is not enabled. Set SHADE_AGENT_ENABLED=true to activate.
+          <p className="text-sm font-semibold text-purple-200 mt-1">
+            {agent?.tee_attestation ? "Attested" : "Development"}
           </p>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+
+      {/* Chains */}
+      {agent?.chains && agent.chains.length > 0 && (
+        <div className="flex items-center gap-2 mt-4">
+          <span className="text-[11px] text-gray-500 font-medium">Chains:</span>
+          {agent.chains.map((chain) => (
+            <span
+              key={chain}
+              className="text-[11px] px-2 py-0.5 rounded-md bg-purple-500/8 text-purple-300 border border-purple-500/10 font-medium"
+            >
+              {chain}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Last fulfillment */}
+      {agent?.last_fulfillment && (
+        <div className="flex items-center gap-2 mt-3 text-[11px] text-gray-600">
+          <Clock className="w-3 h-3" />
+          Last fulfilled: {new Date(agent.last_fulfillment).toLocaleString()}
+        </div>
+      )}
+
+      {!agent?.enabled && (
+        <p className="text-[11px] text-gray-600 mt-3 italic">
+          Shade Agent is not enabled. Set SHADE_AGENT_ENABLED=true to activate.
+        </p>
+      )}
+    </div>
   );
 }

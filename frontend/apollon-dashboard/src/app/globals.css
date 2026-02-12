@@ -120,3 +120,205 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ======================================
+   PYTH-STYLE DESIGN SYSTEM FOR APOLLON
+   ====================================== */
+
+/* Deep purple-black background */
+.pyth-bg {
+  background: #0E0514;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 50, 255, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(80, 30, 200, 0.06), transparent);
+}
+
+/* Subtle background grid mesh */
+.pyth-grid {
+  background-image:
+    linear-gradient(rgba(120, 50, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 50, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Glass card */
+.pyth-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(120, 80, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.pyth-card:hover {
+  border-color: rgba(120, 80, 255, 0.18);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* Elevated card */
+.pyth-card-elevated {
+  background: rgba(20, 10, 40, 0.6);
+  border: 1px solid rgba(120, 80, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 40px rgba(120, 50, 255, 0.04);
+}
+
+/* Purple glow effects */
+.pyth-glow {
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+.pyth-glow-box {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.1), inset 0 0 30px rgba(139, 92, 246, 0.02);
+}
+
+/* Neon accent line */
+.pyth-accent-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.4), transparent);
+}
+
+/* Stat number glow */
+.pyth-stat-number {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #E8E0FF, #FFFFFF, #C4B5FD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Purple gradient text */
+.pyth-gradient-text {
+  background: linear-gradient(135deg, #A78BFA, #7C3AED, #C084FC);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Purple gradient button */
+.pyth-btn-primary {
+  background: linear-gradient(135deg, #7C3AED, #6D28D9);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: white;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.2s;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+}
+
+.pyth-btn-primary:hover {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Ghost button */
+.pyth-btn-ghost {
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  color: #C4B5FD;
+  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.pyth-btn-ghost:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #E8E0FF;
+}
+
+/* Badge style */
+.pyth-badge {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #C4B5FD;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.pyth-badge-live {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #4ADE80;
+}
+
+/* Price feed row - Pyth style */
+.pyth-feed-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s;
+}
+
+.pyth-feed-row:hover {
+  background: rgba(139, 92, 246, 0.04);
+  border-color: rgba(139, 92, 246, 0.12);
+}
+
+/* Scrolling ticker */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.pyth-ticker {
+  animation: ticker 40s linear infinite;
+}
+
+.pyth-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Glow pulse animation */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.pyth-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Chart gradient */
+.pyth-chart-gradient {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.15), transparent);
+}
+
+/* Section divider */
+.pyth-divider {
+  border-top: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.4);
+}
+
+/* Selection */
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: #fff;
+}

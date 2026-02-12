@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Zap,
+  Sparkles,
   Loader2,
   CheckCircle2,
   Copy,
@@ -107,24 +107,19 @@ export default function IntentSwapPanel() {
   };
 
   return (
-    <Card className="bg-white/5 backdrop-blur-lg border-white/10">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
-          <Zap className="w-5 h-5 text-yellow-400" />
-          Pay for Prediction
-          <Badge
-            variant="secondary"
-            className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs"
-          >
-            Cross-Chain
-          </Badge>
-        </CardTitle>
-        <p className="text-gray-400 text-sm">
+    <div className="pyth-card p-6">
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-5 h-5 text-purple-400" />
+          <h3 className="text-base font-bold text-white">Pay for Prediction</h3>
+          <span className="pyth-badge text-[10px]">Cross-Chain</span>
+        </div>
+        <p className="text-gray-500 text-sm ml-7">
           Pay for oracle predictions from any chain via NEAR Intents
         </p>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-4">
+      <div className="space-y-4">
         {/* Quick select popular assets */}
         <div className="flex flex-wrap gap-2">
           {POPULAR_ASSETS.map((asset) => (
@@ -149,7 +144,7 @@ export default function IntentSwapPanel() {
           value={originAsset}
           onChange={(e) => setOriginAsset(e.target.value)}
           placeholder="Asset ID (e.g. nep141:wrap.near)"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 text-sm font-mono"
+          className="w-full bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 text-sm font-mono focus:border-purple-500/30 focus:outline-none transition-colors"
         />
 
         <div className="grid grid-cols-2 gap-3">
@@ -158,14 +153,14 @@ export default function IntentSwapPanel() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 text-sm font-mono"
+            className="bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 text-sm font-mono focus:border-purple-500/30 focus:outline-none transition-colors"
           />
           <input
             type="text"
             value={refundAddress}
             onChange={(e) => setRefundAddress(e.target.value)}
             placeholder="Refund address"
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 text-sm font-mono"
+            className="bg-white/[0.03] border border-purple-500/10 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 text-sm font-mono focus:border-purple-500/30 focus:outline-none transition-colors"
           />
         </div>
 
@@ -246,10 +241,10 @@ export default function IntentSwapPanel() {
         {status === "idle" && (
           <Button
             onClick={getQuote}
-            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+            className="w-full pyth-btn-primary"
             disabled={!originAsset || !amount || !refundAddress}
           >
-            <Zap className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4 mr-2" />
             Get Payment Quote
           </Button>
         )}
@@ -264,7 +259,7 @@ export default function IntentSwapPanel() {
         {status === "quoted" && (
           <Button
             onClick={executePay}
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/10"
           >
             Confirm Payment
           </Button>
@@ -290,7 +285,7 @@ export default function IntentSwapPanel() {
             Payment received! Prediction will be generated.
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

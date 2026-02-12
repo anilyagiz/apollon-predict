@@ -2,9 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   XAxis,
   YAxis,
@@ -17,12 +14,79 @@ import {
 import {
   TrendingUp,
   TrendingDown,
-  Activity,
-  Zap,
+  RefreshCcw,
   Pause,
   Play,
-  BarChart3,
+  ChartLine,
 } from "lucide-react";
+import { TokenLogo } from "@/components/TokenLogos";
+
+/* ======================================================================== */
+/*  Token configuration                                                     */
+/* ======================================================================== */
+
+interface TokenDef {
+  id: string;
+  label: string;
+  symbol: string;
+  /** CoinGecko-style key returned by /price/token/{id} */
+  apiKey: string;
+  color: string;
+  icon: React.ReactNode;
+  priceDecimals: number;
+}
+
+const TOKENS: TokenDef[] = [
+  {
+    id: "near",
+    label: "NEAR",
+    symbol: "NEAR",
+    apiKey: "near",
+    color: "#3B82F6",
+    icon: <TokenLogo tokenId="near" size={16} />,
+    priceDecimals: 4,
+  },
+  {
+    id: "aurora",
+    label: "Aurora",
+    symbol: "AURORA",
+    apiKey: "aurora",
+    color: "#10B981",
+    icon: <TokenLogo tokenId="aurora" size={16} />,
+    priceDecimals: 4,
+  },
+  {
+    id: "ethereum",
+    label: "ETH",
+    symbol: "ETH",
+    apiKey: "ethereum",
+    color: "#818CF8",
+    icon: <TokenLogo tokenId="ethereum" size={16} />,
+    priceDecimals: 2,
+  },
+  {
+    id: "solana",
+    label: "SOL",
+    symbol: "SOL",
+    apiKey: "solana",
+    color: "#A78BFA",
+    icon: <TokenLogo tokenId="solana" size={16} />,
+    priceDecimals: 2,
+  },
+  {
+    id: "algorand",
+    label: "ALGO",
+    symbol: "ALGO",
+    apiKey: "algorand",
+    color: "#2DD4BF",
+    icon: <TokenLogo tokenId="algorand" size={16} />,
+    priceDecimals: 4,
+  },
+];
+
+/* ======================================================================== */
+/*  Types                                                                   */
+/* ======================================================================== */
 
 interface RealTimePriceData {
   timestamp: string;
@@ -42,7 +106,12 @@ interface VolumeData {
   marketCap: number;
 }
 
+/* ======================================================================== */
+/*  Component                                                               */
+/* ======================================================================== */
+
 export default function RealTimePriceChart() {
+  const [selectedToken, setSelectedToken] = useState<TokenDef>(TOKENS[0]);
   const [priceHistory, setPriceHistory] = useState<RealTimePriceData[]>([]);
   const [volumeData, setVolumeData] = useState<VolumeData>({
     volume24h: 0,
@@ -55,41 +124,40 @@ export default function RealTimePriceChart() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastPriceRef = useRef<number>(0);
   const volumeDataRef = useRef<VolumeData>(volumeData);
+  const selectedTokenRef = useRef<TokenDef>(selectedToken);
 
-  // Keep refs in sync with state
   useEffect(() => { lastPriceRef.current = lastPrice; }, [lastPrice]);
   useEffect(() => { volumeDataRef.current = volumeData; }, [volumeData]);
+  useEffect(() => { selectedTokenRef.current = selectedToken; }, [selectedToken]);
 
-  // Fetch NEAR data via backend API (proxies CoinGecko, with fallback)
+  /* ---- Fetch ---------------------------------------------------------- */
+
   const fetchRealTimeData = useCallback(async () => {
+    const token = selectedTokenRef.current;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${apiUrl}/price/near`);
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data || !data.near) {
-        throw new Error("No NEAR data received");
-      }
+      const response = await fetch(`${apiUrl}/price/token/${token.id}`);
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const json = await response.json();
+      const d = json?.data;
+      if (!d) throw new Error("No data received");
 
       const now = new Date();
-      const currentPrice = data.near.usd;
+      const currentPrice = d.usd;
       const prevPrice = lastPriceRef.current;
       const change = currentPrice - prevPrice;
-      const changePercent = prevPrice > 0 ? (change / prevPrice) * 100 : data.near.usd_24h_change || 0;
-
-      const realVolume = data.near.usd_24h_vol || 0;
-      const realMarketCap = data.near.usd_market_cap || 0;
+      const changePercent =
+        prevPrice > 0 ? (change / prevPrice) * 100 : d.usd_24h_change || 0;
 
       setVolumeData({
-        volume24h: realVolume,
-        volumeChange24h: data.near.usd_24h_change || 0,
-        trades24h: realVolume > 0 ? Math.floor(realVolume / (currentPrice * 100)) : 0,
-        marketCap: realMarketCap,
+        volume24h: d.usd_24h_vol || 0,
+        volumeChange24h: d.usd_24h_change || 0,
+        trades24h:
+          d.usd_24h_vol > 0
+            ? Math.floor(d.usd_24h_vol / (currentPrice * 100))
+            : 0,
+        marketCap: d.usd_market_cap || 0,
       });
 
       const newDataPoint: RealTimePriceData = {
@@ -100,80 +168,90 @@ export default function RealTimePriceChart() {
           minute: "2-digit",
           second: "2-digit",
         }),
-        price: Number(currentPrice.toFixed(6)),
-        volume: realVolume,
-        change: change,
-        changePercent: changePercent,
+        price: Number(currentPrice.toFixed(token.priceDecimals + 2)),
+        volume: d.usd_24h_vol || 0,
+        change,
+        changePercent,
         sources: 1,
         confidence: 95,
       };
 
-      setPriceHistory((prev) => {
-        const updated = [...prev, newDataPoint];
-        // Keep last 360 data points (1 hour of 10-second intervals)
-        return updated.slice(-360);
-      });
-
+      setPriceHistory((prev) => [...prev, newDataPoint].slice(-360));
       setLastPrice(currentPrice);
     } catch (error) {
-      console.error("Failed to fetch NEAR data:", error);
-
-      // Add error data point to show connection issues in chart
+      console.error(`Failed to fetch ${token.label} data:`, error);
       const now = new Date();
-      const errorDataPoint: RealTimePriceData = {
-        timestamp: now.toISOString(),
-        time: now.toLocaleTimeString("en-US", {
-          hour12: false,
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-        price: lastPriceRef.current || 0.205, // Use last known price
-        volume: volumeDataRef.current.volume24h || 0,
-        change: 0,
-        changePercent: 0,
-        sources: 0, // Indicates error state
-        confidence: 0, // Indicates error state
-      };
-
-      setPriceHistory((prev) => {
-        const updated = [...prev, errorDataPoint];
-        return updated.slice(-360);
-      });
+      setPriceHistory((prev) =>
+        [
+          ...prev,
+          {
+            timestamp: now.toISOString(),
+            time: now.toLocaleTimeString("en-US", {
+              hour12: false,
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }),
+            price: lastPriceRef.current || 0,
+            volume: volumeDataRef.current.volume24h || 0,
+            change: 0,
+            changePercent: 0,
+            sources: 0,
+            confidence: 0,
+          },
+        ].slice(-360)
+      );
     }
   }, []);
 
-  // Start/stop live updates
+  /* ---- Timer ---------------------------------------------------------- */
+
   useEffect(() => {
     if (isLive) {
-      // Initial fetch
       fetchRealTimeData();
-
-      // Set 10-second interval
       intervalRef.current = setInterval(fetchRealTimeData, 10000);
     } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isLive, fetchRealTimeData]);
+
+  /* Reset history when token changes */
+  const handleTokenChange = (token: TokenDef) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setSelectedToken(token);
+    selectedTokenRef.current = token;
+    setPriceHistory([]);
+    setLastPrice(0);
+    lastPriceRef.current = 0;
+    setVolumeData({ volume24h: 0, volumeChange24h: 0, trades24h: 0, marketCap: 0 });
+    // re-start fetching immediately
+    setTimeout(() => {
+      fetchRealTimeData();
+      if (isLive) {
+        intervalRef.current = setInterval(fetchRealTimeData, 10000);
+      }
+    }, 50);
+  };
+
+  /* ---- Derived -------------------------------------------------------- */
 
   const currentData = priceHistory[priceHistory.length - 1];
   const isPositive = currentData?.changePercent >= 0;
 
-  const formatPrice = (value: number) => `$${value.toFixed(6)}`;
+  const dec = selectedToken.priceDecimals;
+  const formatPrice = (value: number) =>
+    `$${value.toFixed(dec)}`;
   const formatVolume = (value: number) => {
     if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
     if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
     if (value >= 1e3) return `$${(value / 1e3).toFixed(0)}K`;
     return `$${value.toFixed(0)}`;
   };
+
+  /* ---- Tooltip -------------------------------------------------------- */
 
   const CustomTooltip = ({
     active,
@@ -187,231 +265,253 @@ export default function RealTimePriceChart() {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-black/90 backdrop-blur-lg border border-white/20 rounded-lg p-3 space-y-1">
-          <p className="text-white font-medium text-sm">{`Time: ${label}`}</p>
-          <p className="text-neutral-400 text-sm">{`Price: ${formatPrice(
-            data.price
-          )}`}</p>
-          <p className="text-neutral-400 text-sm">{`Volume: ${formatVolume(
-            data.volume
-          )}`}</p>
+        <div className="bg-[#1A0F2E]/95 backdrop-blur-xl border border-purple-500/20 rounded-xl p-3 space-y-1 shadow-xl shadow-purple-500/10">
+          <p className="text-purple-200 font-semibold text-sm">{`Time: ${label}`}</p>
+          <p className="text-white text-sm font-mono">{`Price: ${formatPrice(data.price)}`}</p>
+          <p className="text-gray-400 text-xs">{`Volume: ${formatVolume(data.volume)}`}</p>
           <p
-            className={`text-sm ${
-              data.changePercent >= 0 ? "text-neutral-400" : "text-neutral-500"
+            className={`text-xs ${
+              data.changePercent >= 0 ? "text-emerald-400" : "text-red-400"
             }`}
           >
-            {`Change: ${
-              data.changePercent >= 0 ? "+" : ""
-            }${data.changePercent.toFixed(4)}%`}
+            {`Change: ${data.changePercent >= 0 ? "+" : ""}${data.changePercent.toFixed(4)}%`}
           </p>
-          <p className="text-gray-400 text-xs">{`Confidence: ${data.confidence.toFixed(
-            2
-          )}%`}</p>
         </div>
       );
     }
     return null;
   };
 
+  /* ---- Render --------------------------------------------------------- */
+
   return (
-    <Card className="bg-white/5 backdrop-blur-lg border-white/10">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
+    <div className="pyth-card-elevated p-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
         <div>
-          <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="w-6 h-6 text-neutral-400" />
-            NEAR Price
-            <Badge
-              variant="secondary"
-              className="bg-green-500/20 text-green-300 border-green-500/30"
-            >
+          <div className="flex items-center gap-3">
+            <TokenLogo tokenId={selectedToken.id} size={24} />
+            <h2 className="text-xl font-bold text-white">
+              {selectedToken.label} Price
+            </h2>
+            <span className="pyth-badge-live text-[11px] px-2.5 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 text-emerald-400 font-semibold">
               LIVE
-            </Badge>
-          </CardTitle>
-          <p className="text-gray-400 mt-1">
-            {" "}
-            price updates every second • 6-decimal accuracy
+            </span>
+          </div>
+          <p className="text-gray-500 text-sm mt-1 ml-9">
+            Real-time updates every 10 seconds
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
+        <div className="flex items-center gap-2 ml-9 md:ml-0">
+          <button
             onClick={() => setIsLive(!isLive)}
-            variant={isLive ? "destructive" : "default"}
-            size="sm"
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              isLive
+                ? "pyth-btn-ghost text-red-300 border-red-500/15 bg-red-500/6 hover:bg-red-500/12"
+                : "pyth-btn-ghost"
+            }`}
           >
             {isLive ? (
-              <Pause className="w-4 h-4" />
+              <Pause className="w-3.5 h-3.5" />
             ) : (
-              <Play className="w-4 h-4" />
+              <Play className="w-3.5 h-3.5" />
             )}
             {isLive ? "Pause" : "Resume"}
-          </Button>
-
-          <Button
+          </button>
+          <button
             onClick={fetchRealTimeData}
-            variant="outline"
-            size="sm"
-            className="border-white/20 text-white hover:bg-white/10"
+            className="pyth-btn-ghost px-3 py-2 rounded-xl"
           >
-            <Zap className="w-4 h-4" />
-          </Button>
+            <RefreshCcw className="w-3.5 h-3.5" />
+          </button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-6">
-        {/* Current Price & Volume Stats */}
-        {currentData && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      {/* ---- Token Selector Tabs ---- */}
+      <div className="flex flex-wrap gap-2 mb-6 ml-9 md:ml-0">
+        {TOKENS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => handleTokenChange(t)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+              selectedToken.id === t.id
+                ? "border-purple-500/40 bg-purple-500/15 text-purple-200"
+                : "border-white/5 bg-white/[0.02] text-gray-400 hover:text-gray-200 hover:border-purple-500/20"
+            }`}
           >
-            <div className="bg-white/5 rounded-lg p-4 text-center">
-              <div className="text-gray-400 text-sm">Current Price</div>
-              <div className="text-2xl font-bold text-white font-mono">
-                ${currentData.price.toFixed(6)}
-              </div>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                {isPositive ? (
-                  <TrendingUp className="w-3 h-3 text-neutral-400" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 text-neutral-500" />
-                )}
-                <span
-                  className={`text-xs ${
-                    isPositive ? "text-neutral-400" : "text-neutral-500"
-                  }`}
-                >
-                  {isPositive ? "+" : ""}
-                  {currentData.changePercent.toFixed(4)}%
-                </span>
-              </div>
-            </div>
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-            <div className="bg-white/5 rounded-lg p-4 text-center">
-              <div className="text-gray-400 text-sm">24h Volume</div>
-              <div className="text-xl font-bold text-neutral-400">
-                {formatVolume(volumeData.volume24h)}
-              </div>
-              <div
-                className={`text-xs mt-1 ${
-                  volumeData.volumeChange24h >= 0
-                    ? "text-neutral-400"
-                    : "text-neutral-500"
+      {/* Stats Row */}
+      {currentData && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"
+        >
+          <div className="rounded-xl bg-white/[0.02] border border-purple-500/8 p-4 text-center">
+            <div className="text-gray-500 text-[11px] font-medium mb-1">
+              Current Price
+            </div>
+            <div className="pyth-stat-number text-xl font-mono">
+              {formatPrice(currentData.price)}
+            </div>
+            <div className="flex items-center justify-center gap-1 mt-1">
+              {isPositive ? (
+                <TrendingUp className="w-3 h-3 text-emerald-400" />
+              ) : (
+                <TrendingDown className="w-3 h-3 text-red-400" />
+              )}
+              <span
+                className={`text-xs font-medium ${
+                  isPositive ? "text-emerald-400" : "text-red-400"
                 }`}
               >
-                {volumeData.volumeChange24h >= 0 ? "+" : ""}
-                {volumeData.volumeChange24h.toFixed(2)}%
-              </div>
+                {isPositive ? "+" : ""}
+                {currentData.changePercent.toFixed(4)}%
+              </span>
             </div>
-
-            <div className="bg-white/5 rounded-lg p-4 text-center">
-              <div className="text-gray-400 text-sm">Market Cap</div>
-              <div className="text-xl font-bold text-white">
-                {formatVolume(volumeData.marketCap)}
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                {volumeData.trades24h.toLocaleString()} trades
-              </div>
-            </div>
-
-            <div className="bg-white/5 rounded-lg p-4 text-center">
-              <div className="text-gray-400 text-sm">Data Quality</div>
-              <div className="text-xl font-bold text-neutral-400">
-                {currentData.confidence.toFixed(2)}%
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                {typeof currentData.sources === "object"
-                  ? `${Object.keys(currentData.sources).length} sources`
-                  : `${currentData.sources || 3} sources`}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Real-Time Price Chart */}
-        <div className="h-96 w-full">
-          {priceHistory.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={priceHistory}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient
-                    id="priceGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#374151"
-                  opacity={0.3}
-                />
-
-                <XAxis
-                  dataKey="time"
-                  stroke="#9CA3AF"
-                  fontSize={10}
-                  interval="preserveStartEnd"
-                  tick={{ fontSize: 10 }}
-                />
-
-                <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={10}
-                  domain={["dataMin - 0.000001", "dataMax + 0.000001"]}
-                  tickFormatter={(value) => `$${Number(value).toFixed(6)}`}
-                  tick={{ fontSize: 10 }}
-                />
-
-                <Tooltip content={<CustomTooltip />} />
-
-                <Area
-                  type="monotone"
-                  dataKey="price"
-                  stroke="#60A5FA"
-                  strokeWidth={2}
-                  fill="url(#priceGradient)"
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    stroke: "#60A5FA",
-                    strokeWidth: 2,
-                    fill: "#1E293B",
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <BarChart3 className="w-12 h-12 text-gray-500 mx-auto animate-pulse" />
-                <div className="text-gray-400">
-                  Collecting real-time data...
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Data Points Info */}
-        <div className="flex items-center justify-between text-sm text-gray-400">
-          <div>
-            Updates every 10 seconds • {priceHistory.length} data points
-            collected
           </div>
-          <div>Last update: {currentData?.time || "N/A"}</div>
+
+          <div className="rounded-xl bg-white/[0.02] border border-purple-500/8 p-4 text-center">
+            <div className="text-gray-500 text-[11px] font-medium mb-1">
+              24h Volume
+            </div>
+            <div className="text-lg font-bold text-purple-200">
+              {formatVolume(volumeData.volume24h)}
+            </div>
+            <div
+              className={`text-xs mt-1 font-medium ${
+                volumeData.volumeChange24h >= 0
+                  ? "text-emerald-400"
+                  : "text-red-400"
+              }`}
+            >
+              {volumeData.volumeChange24h >= 0 ? "+" : ""}
+              {volumeData.volumeChange24h.toFixed(2)}%
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white/[0.02] border border-purple-500/8 p-4 text-center">
+            <div className="text-gray-500 text-[11px] font-medium mb-1">
+              Market Cap
+            </div>
+            <div className="text-lg font-bold text-white">
+              {formatVolume(volumeData.marketCap)}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              {volumeData.trades24h.toLocaleString()} trades
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white/[0.02] border border-purple-500/8 p-4 text-center">
+            <div className="text-gray-500 text-[11px] font-medium mb-1">
+              Data Quality
+            </div>
+            <div className="text-lg font-bold text-purple-200">
+              {currentData.confidence.toFixed(2)}%
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              {typeof currentData.sources === "object"
+                ? `${Object.keys(currentData.sources).length} sources`
+                : `${currentData.sources || 3} sources`}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Chart */}
+      <div className="h-96 w-full">
+        {priceHistory.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={priceHistory}
+              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient
+                  id="priceGradientPyth"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="5%"
+                    stopColor={selectedToken.color}
+                    stopOpacity={0.25}
+                  />
+                  <stop
+                    offset="50%"
+                    stopColor={selectedToken.color}
+                    stopOpacity={0.08}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={selectedToken.color}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="rgba(139,92,246,0.06)"
+              />
+              <XAxis
+                dataKey="time"
+                stroke="#4B5563"
+                fontSize={10}
+                interval="preserveStartEnd"
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis
+                stroke="#4B5563"
+                fontSize={10}
+                domain={["dataMin - 0.000001", "dataMax + 0.000001"]}
+                tickFormatter={(value) => formatPrice(Number(value))}
+                tick={{ fontSize: 10 }}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="price"
+                stroke={selectedToken.color}
+                strokeWidth={2}
+                fill="url(#priceGradientPyth)"
+                dot={false}
+                activeDot={{
+                  r: 4,
+                  stroke: selectedToken.color,
+                  strokeWidth: 2,
+                  fill: "#1A0F2E",
+                }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <ChartLine className="w-12 h-12 text-purple-500/30 mx-auto animate-pulse" />
+              <div className="text-gray-500">
+                Collecting {selectedToken.label} data...
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-[11px] text-gray-600 mt-4 pt-4 border-t border-purple-500/5">
+        <div>
+          Updates every 10 seconds &middot; {priceHistory.length} data points
+          collected
         </div>
-      </CardContent>
-    </Card>
+        <div>Last update: {currentData?.time || "N/A"}</div>
+      </div>
+    </div>
   );
 }
