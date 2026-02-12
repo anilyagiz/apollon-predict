@@ -400,7 +400,7 @@ class NearOracleClientFull(NearOracleClient):
         try:
             import httpx
 
-            args = {
+            args: Dict[str, Any] = {
                 "request_id": request_id,
                 "predicted_price": predicted_price,
             }
