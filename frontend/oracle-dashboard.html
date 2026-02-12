@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apollon Oracle Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d4ff, #090979);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background-color: #4CAF50; }
+        .status-warning { background-color: #FFC107; }
+        .status-offline { background-color: #F44336; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .metric-change {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .positive { color: #4CAF50; }
+        .negative { color: #F44336; }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        .oracle-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .oracle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .oracle-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .oracle-info {
+            flex: 1;
+        }
+
+        .oracle-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .oracle-details {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .oracle-score {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .prediction-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 3px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .prediction-time {
+            opacity: 0.7;
+            font-size: 0.8rem;
+        }
+
+        .prediction-value {
+            font-weight: 600;
+        }
+
+        .prediction-accuracy {
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .accuracy-high { background-color: rgba(76, 175, 80, 0.3); color: #4CAF50; }
+        .accuracy-medium { background-color: rgba(255, 193, 7, 0.3); color: #FFC107; }
+        .accuracy-low { background-color: rgba(244, 67, 54, 0.3); color: #F44336; }
+
+        .feature-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .feature-item {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .feature-name {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .feature-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .validation-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .validation-name {
+            font-weight: 600;
+        }
+
+        .validation-result {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .validation-pass { background-color: rgba(76, 175, 80, 0.3); color: #4CAF50; }
+        .validation-fail { background-color: rgba(244, 67, 54, 0.3); color: #F44336; }
+        .validation-pending { background-color: rgba(255, 193, 7, 0.3); color: #FFC107; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .control-input {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #00d4ff, #090979);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔮 Apollon Oracle Dashboard</h1>
+            <p>Real-time monitoring of decentralized oracle predictions and system health</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label class="control-label">Time Range</label>
+                <select class="control-input" id="timeRange">
+                    <option value="1h">Last Hour</option>
+                    <option value="6h" selected>Last 6 Hours</option>
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Oracle Filter</label>
+                <select class="control-input" id="oracleFilter">
+                    <option value="all">All Oracles</option>
+                    <option value="active">Active Only</option>
+                    <option value="high-reputation">High Reputation</option>
+                    <option value="disputed">With Disputes</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Asset</label>
+                <select class="control-input" id="assetFilter">
+                    <option value="all">All Assets</option>
+                    <option value="BTC">Bitcoin</option>
+                    <option value="ETH">Ethereum</option>
+                    <option value="NEAR">NEAR</option>
+                    <option value="SOL">Solana</option>
+                </select>
+            </div>
+            <button class="btn" onclick="refreshDashboard()">🔄 Refresh</button>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- System Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🌐 System Overview</h3>
+                    <div class="status-indicator status-online" id="systemStatus"></div>
+                </div>
+                <div class="metric-label">Active Oracles</div>
+                <div class="metric-value" id="activeOracles">12</div>
+                <div class="metric-change positive">+2 from last hour</div>
+                
+                <div class="metric-label" style="margin-top: 15px;">Total Predictions (24h)</div>
+                <div class="metric-value" id="totalPredictions">2,847</div>
+                <div class="metric-change positive">+12.5% from yesterday</div>
+            </div>
+
+            <!-- Oracle Performance -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📊 Oracle Performance</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Prediction Accuracy -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🎯 Prediction Accuracy</h3>
+                    <div class="status-indicator status-warning"></div>
+                </div>
+                <div class="metric-value" id="avgAccuracy">87.3%</div>
+                <div class="metric-label">Average Accuracy</div>
+                <div class="metric-change negative">-1.2% from last period</div>
+                
+                <div class="chart-container">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Oracle Rankings -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🏆 Oracle Rankings</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="oracle-list" id="oracleList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Recent Predictions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔄 Recent Predictions</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="prediction-history" id="predictionHistory">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Feature Engineering Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">⚙️ Feature Engineering</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="feature-overview" id="featureOverview">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Oracle Validation -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">✅ Oracle Validation</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="validation-status" id="validationStatus">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">💓 System Health</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="metric-label">ZK Proof Generation</div>
+                <div class="metric-value" id="zkProofs">98.7%</div>
+                <div class="metric-change positive">+0.3% efficiency</div>
+                
+                <div class="metric-label" style="margin-top: 15px;">Cross-chain Sync</div>
+                <div class="metric-value" id="crossChainSync">99.1%</div>
+                <div class="metric-change positive">All chains synced</div>
+            </div>
+
+            <!-- Dispute Resolution -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <h3 class="card-title">⚖️ Dispute Resolution</h3>
+                    <div class="status-indicator status-warning"></div>
+                </div>
+                <div class="dispute-list" id="disputeList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Advanced Analytics -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Advanced Analytics</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="analyticsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let performanceChart, accuracyChart, analyticsChart;
+        let dashboardData = {};
+        let updateInterval;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadDashboardData();
+            startAutoUpdate();
+        });
+
+        // Initialize charts
+        function initializeCharts() {
+            // Performance Chart
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Oracle Performance Score',
+                        data: [],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+
+            // Accuracy Chart
+            const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+            accuracyChart = new Chart(accuracyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Accuracy', 'Medium Accuracy', 'Low Accuracy'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Analytics Chart
+            const analyticsCtx = document.getElementById('analyticsChart').getContext('2d');
+            analyticsChart = new Chart(analyticsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Prediction Accuracy',
+                            data: [],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Oracle Count',
+                            data: [],
+                            borderColor: '#00d4ff',
+                            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Accuracy %'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Oracle Count'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Simulate API call - replace with actual API endpoint
+                const response = await fetch('/api/dashboard-data');
+                if (response.ok) {
+                    dashboardData = await response.json();
+                } else {
+                    // Use mock data if API is not available
+                    dashboardData = generateMockData();
+                }
+                updateDashboard();
+            } catch (error) {
+                console.warn('API unavailable, using mock data');
+                dashboardData = generateMockData();
+                updateDashboard();
+            }
+        }
+
+        // Generate mock data for demonstration
+        function generateMockData() {
+            const now = new Date();
+            const mockData = {
+                systemStatus: 'online',
+                activeOracles: 12,
+                totalPredictions: 2847,
+                avgAccuracy: 87.3,
+                zkProofs: 98.7,
+                crossChainSync: 99.1,
+                oracles: [
+                    { id: 'oracle_1', name: 'CryptoOracle Pro', reputation: 95.2, status: 'active', disputes: 0, accuracy: 89.5 },
+                    { id: 'oracle_2', name: 'ChainLink Oracle', reputation: 92.8, status: 'active', disputes: 1, accuracy: 87.2 },
+                    { id: 'oracle_3', name: 'Band Protocol', reputation: 88.4, status: 'active', disputes: 2, accuracy: 84.7 },
+                    { id: 'oracle_4', name: 'NEAR Oracle Hub', reputation: 91.1, status: 'active', disputes: 0, accuracy: 86.8 },
+                    { id: 'oracle_5', name: 'Solana Price Feed', reputation: 89.7, status: 'active', disputes: 1, accuracy: 85.3 }
+                ],
+                recentPredictions: [
+                    { asset: 'BTC', prediction: 43250, actual: 43180, accuracy: 99.8, timestamp: new Date(now - 300000) },
+                    { asset: 'ETH', prediction: 2650, actual: 2670, accuracy: 99.2, timestamp: new Date(now - 600000) },
+                    { asset: 'NEAR', prediction: 3.45, actual: 3.42, accuracy: 99.1, timestamp: new Date(now - 900000) },
+                    { asset: 'SOL', prediction: 98.5, actual: 99.1, accuracy: 99.4, timestamp: new Date(now - 1200000) }
+                ],
+                featureEngineering: {
+                    totalFeatures: 847,
+                    categories: {
+                        technical: 245,
+                        microstructure: 156,
+                        sentiment: 89,
+                        derivatives: 134,
+                        on_chain: 223
+                    }
+                },
+                validationStatus: [
+                    { name: 'Model Integrity', status: 'pass', score: 98.5 },
+                    { name: 'Data Quality', status: 'pass', score: 96.2 },
+                    { name: 'Consensus Check', status: 'pass', score: 94.8 },
+                    { name: 'Statistical Validation', status: 'warning', score: 87.3 }
+                ],
+                disputes: [
+                    { id: 'dispute_1', oracle: 'ChainLink Oracle', asset: 'BTC', prediction: 44000, actual: 43180, status: 'voting', evidence: 'Price feed delayed by 15 minutes' },
+                    { id: 'dispute_2', oracle: 'Band Protocol', asset: 'ETH', prediction: 2800, actual: 2670, status: 'resolved', evidence: 'Market volatility exceeded threshold' }
+                ],
+                performanceHistory: Array.from({ length: 24 }, (_, i) => ({
+                    time: new Date(now - (23 - i) * 3600000),
+                    performance: 85 + Math.random() * 10,
+                    oracleCount: 10 + Math.floor(Math.random() * 3)
+                })),
+                accuracyHistory: Array.from({ length: 7 }, (_, i) => ({
+                    time: new Date(now - (6 - i) * 86400000),
+                    accuracy: 85 + Math.random() * 8,
+                    highAccuracy: 60 + Math.random() * 10,
+                    mediumAccuracy: 20 + Math.random() * 10,
+                    lowAccuracy: 5 + Math.random() * 5
+                }))
+            };
+
+            return mockData;
+        }
+
+        // Update dashboard with data
+        function updateDashboard() {
+            if (!dashboardData) return;
+
+            // Update system overview
+            document.getElementById('activeOracles').textContent = dashboardData.activeOracles;
+            document.getElementById('totalPredictions').textContent = dashboardData.totalPredictions.toLocaleString();
+            document.getElementById('avgAccuracy').textContent = dashboardData.avgAccuracy + '%';
+            document.getElementById('zkProofs').textContent = dashboardData.zkProofs + '%';
+            document.getElementById('crossChainSync').textContent = dashboardData.crossChainSync + '%';
+
+            // Update oracle list
+            updateOracleList();
+
+            // Update recent predictions
+            updateRecentPredictions();
+
+            // Update feature engineering
+            updateFeatureEngineering();
+
+            // Update validation status
+            updateValidationStatus();
+
+            // Update disputes
+            updateDisputes();
+
+            // Update charts
+            updateCharts();
+        }
+
+        // Update oracle list
+        function updateOracleList() {
+            const oracleList = document.getElementById('oracleList');
+            oracleList.innerHTML = '';
+
+            dashboardData.oracles.slice(0, 5).forEach(oracle => {
+                const oracleItem = document.createElement('div');
+                oracleItem.className = 'oracle-item';
+                oracleItem.innerHTML = `
+                    <div class="oracle-info">
+                        <div class="oracle-name">${oracle.name}</div>
+                        <div class="oracle-details">Accuracy: ${oracle.accuracy}% | Disputes: ${oracle.disputes}</div>
+                    </div>
+                    <div class="oracle-score ${oracle.reputation >= 90 ? 'positive' : oracle.reputation >= 80 ? 'negative' : 'negative'}">${oracle.reputation}</div>
+                `;
+                oracleList.appendChild(oracleItem);
+            });
+        }
+
+        // Update recent predictions
+        function updateRecentPredictions() {
+            const predictionHistory = document.getElementById('predictionHistory');
+            predictionHistory.innerHTML = '';
+
+            dashboardData.recentPredictions.forEach(prediction => {
+                const predictionItem = document.createElement('div');
+                predictionItem.className = 'prediction-item';
+                
+                const accuracyClass = prediction.accuracy >= 99 ? 'accuracy-high' : 
+                                    prediction.accuracy >= 95 ? 'accuracy-medium' : 'accuracy-low';
+                
+                predictionItem.innerHTML = `
+                    <div>
+                        <span class="prediction-value">${prediction.asset}: $${prediction.prediction}</span>
+                        <div class="prediction-time">${formatTime(prediction.timestamp)}</div>
+                    </div>
+                    <div class="prediction-accuracy ${accuracyClass}">${prediction.accuracy}%</div>
+                `;
+                predictionHistory.appendChild(predictionItem);
+            });
+        }
+
+        // Update feature engineering
+        function updateFeatureEngineering() {
+            const featureOverview = document.getElementById('featureOverview');
+            featureOverview.innerHTML = '';
+
+            Object.entries(dashboardData.featureEngineering.categories).forEach(([category, count]) => {
+                const featureItem = document.createElement('div');
+                featureItem.className = 'feature-item';
+                featureItem.innerHTML = `
+                    <div class="feature-name">${category.replace('_', ' ').toUpperCase()}</div>
+                    <div class="feature-value">${count}</div>
+                `;
+                featureOverview.appendChild(featureItem);
+            });
+        }
+
+        // Update validation status
+        function updateValidationStatus() {
+            const validationStatus = document.getElementById('validationStatus');
+            validationStatus.innerHTML = '';
+
+            dashboardData.validationStatus.forEach(validation => {
+                const validationItem = document.createElement('div');
+                validationItem.className = 'validation-status';
+                
+                const statusClass = validation.status === 'pass' ? 'validation-pass' : 
+                                  validation.status === 'fail' ? 'validation-fail' : 'validation-pending';
+                
+                validationItem.innerHTML = `
+                    <div class="validation-name">${validation.name}</div>
+                    <div class="validation-result ${statusClass}">${validation.score}%</div>
+                `;
+                validationStatus.appendChild(validationItem);
+            });
+        }
+
+        // Update disputes
+        function updateDisputes() {
+            const disputeList = document.getElementById('disputeList');
+            if (!disputeList) return;
+
+            disputeList.innerHTML = '';
+
+            dashboardData.disputes.forEach(dispute => {
+                const disputeItem = document.createElement('div');
+                disputeItem.className = 'oracle-item';
+                disputeItem.innerHTML = `
+                    <div class="oracle-info">
+                        <div class="oracle-name">${dispute.oracle} - ${dispute.asset}</div>
+                        <div class="oracle-details">Prediction: $${dispute.prediction} | Actual: $${dispute.actual}</div>
+                        <div class="oracle-details">${dispute.evidence}</div>
+                    </div>
+                    <div class="validation-result ${dispute.status === 'resolved' ? 'validation-pass' : 'validation-pending'}">${dispute.status.toUpperCase()}</div>
+                `;
+                disputeList.appendChild(disputeItem);
+            });
+        }
+
+        // Update charts
+        function updateCharts() {
+            if (!dashboardData.performanceHistory) return;
+
+            // Update performance chart
+            const performanceLabels = dashboardData.performanceHistory.map(h => formatTime(h.time));
+            const performanceData = dashboardData.performanceHistory.map(h => h.performance);
+            
+            performanceChart.data.labels = performanceLabels;
+            performanceChart.data.datasets[0].data = performanceData;
+            performanceChart.update();
+
+            // Update analytics chart
+            const analyticsLabels = dashboardData.accuracyHistory.map(h => formatDate(h.time));
+            const accuracyData = dashboardData.accuracyHistory.map(h => h.accuracy);
+            const oracleCountData = dashboardData.accuracyHistory.map(h => h.highAccuracy + h.mediumAccuracy);
+            
+            analyticsChart.data.labels = analyticsLabels;
+            analyticsChart.data.datasets[0].data = accuracyData;
+            analyticsChart.data.datasets[1].data = oracleCountData;
+            analyticsChart.update();
+        }
+
+        // Utility functions
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Refresh dashboard
+        function refreshDashboard() {
+            loadDashboardData();
+        }
+
+        // Auto-update functionality
+        function startAutoUpdate() {
+            updateInterval = setInterval(() => {
+                // Simulate real-time updates
+                if (dashboardData) {
+                    // Update some metrics
+                    dashboardData.avgAccuracy += (Math.random() - 0.5) * 0.5;
+                    dashboardData.avgAccuracy = Math.max(80, Math.min(95, dashboardData.avgAccuracy));
+                    document.getElementById('avgAccuracy').textContent = dashboardData.avgAccuracy.toFixed(1) + '%';
+                    
+                    // Update system status
+                    const statuses = ['online', 'warning', 'offline'];
+                    const currentStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                    const statusElement = document.getElementById('systemStatus');
+                    statusElement.className = `status-indicator status-${currentStatus}`;
+                }
+            }, 5000); // Update every 5 seconds
+        }
+
+        // Handle control changes
+        document.getElementById('timeRange').addEventListener('change', function() {
+            refreshDashboard();
+        });
+
+        document.getElementById('oracleFilter').addEventListener('change', function() {
+            updateOracleList();
+        });
+
+        document.getElementById('assetFilter').addEventListener('change', function() {
+            updateRecentPredictions();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
+</body>
+</html>
