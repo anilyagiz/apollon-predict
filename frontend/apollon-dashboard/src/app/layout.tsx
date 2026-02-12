@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Apollon - NEAR ZK Price Oracle",
-  description: "Zero-knowledge price predictions powered by ML ensemble models on NEAR Protocol",
+  title: "Apollon - Multichain ZK Price Oracle",
+  description:
+    "Zero-knowledge price predictions powered by ML ensemble models on NEAR Protocol with cross-chain capabilities",
 };
 
 export default function RootLayout({
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
       >
         {children}
       </body>
