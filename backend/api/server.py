@@ -154,24 +154,37 @@ app_state = {
 }
 
 
+# Default mock base prices per symbol so each token gets a realistic prediction
+_MOCK_BASE_PRICES: dict[str, float] = {
+    "NEARUSD": 3.45,
+    "AURORAUSD": 0.22,
+    "ETHUSD": 2450.0,
+    "SOLUSD": 135.0,
+    "ALGOUSD": 0.21,
+}
+
+
 # Mock data generators for development
-def generate_mock_historical_data(days=90):
+def generate_mock_historical_data(days=90, symbol: str = "ALGOUSD"):
     """Generate mock historical price data for development"""
     data = []
-    base_price = 0.20
+    # Use the correct base price for the requested symbol
+    base_price = _MOCK_BASE_PRICES.get(symbol.upper(), 0.20)
+    noise_scale = base_price * 0.025  # 2.5% noise
+    wave_amp = base_price * 0.10  # 10% sine wave amplitude
     now = datetime.now()
 
     for i in range(days * 24):  # Hourly data
         timestamp = now - pd.Timedelta(hours=i)
         # Add some realistic variation
-        price = base_price + 0.02 * np.sin(i / 100) + np.random.normal(0, 0.005)
+        price = base_price + wave_amp * np.sin(i / 100) + np.random.normal(0, noise_scale)
         volume = np.random.uniform(1000000, 5000000)
 
         data.append(
             {
                 "datetime": timestamp,
-                "symbol": "ALGOUSD",
-                "price": max(0.1, price),
+                "symbol": symbol,
+                "price": max(base_price * 0.5, price),
                 "volume": volume,
             }
         )
@@ -179,13 +192,30 @@ def generate_mock_historical_data(days=90):
     return list(reversed(data))
 
 
-def generate_mock_prediction(current_price=0.20):
-    """Generate a mock prediction for development"""
+def generate_mock_prediction(current_price: float | None = None, symbol: str = "ALGOUSD", timeframe: str = "24h"):
+    """Generate a mock prediction for development.
+    Accepts the requested symbol and timeframe so the response mirrors
+    exactly what the caller asked for."""
+
+    if current_price is None:
+        current_price = _MOCK_BASE_PRICES.get(symbol.upper(), 0.20)
+
+    # Scale the prediction range by timeframe
+    tf_mult = 1.0
+    if timeframe in ("1h", "1H"):
+        tf_mult = 0.15
+    elif timeframe in ("4h", "4H"):
+        tf_mult = 0.4
+    elif timeframe in ("24h", "24H", "1d"):
+        tf_mult = 1.0
+    elif timeframe in ("7d", "1w"):
+        tf_mult = 2.5
+
     # Generate individual model predictions
-    lstm_pred = current_price * (1 + np.random.uniform(-0.02, 0.03))
-    gru_pred = current_price * (1 + np.random.uniform(-0.015, 0.025))
-    prophet_pred = current_price * (1 + np.random.uniform(-0.01, 0.02))
-    xgboost_pred = current_price * (1 + np.random.uniform(-0.02, 0.035))
+    lstm_pred = current_price * (1 + np.random.uniform(-0.02, 0.03) * tf_mult)
+    gru_pred = current_price * (1 + np.random.uniform(-0.015, 0.025) * tf_mult)
+    prophet_pred = current_price * (1 + np.random.uniform(-0.01, 0.02) * tf_mult)
+    xgboost_pred = current_price * (1 + np.random.uniform(-0.02, 0.035) * tf_mult)
 
     # Weighted ensemble
     weights = {"lstm": 0.35, "gru": 0.25, "prophet": 0.25, "xgboost": 0.15}
@@ -199,8 +229,8 @@ def generate_mock_prediction(current_price=0.20):
     prediction_std = np.std([lstm_pred, gru_pred, prophet_pred, xgboost_pred])
 
     return {
-        "symbol": "ALGOUSD",
-        "timeframe": "24h",
+        "symbol": symbol,
+        "timeframe": timeframe,
         "predicted_price": round(ensemble, 6),
         "current_price": round(current_price, 6),
         "price_change": round(ensemble - current_price, 6),
@@ -335,10 +365,10 @@ async def get_prediction(request: PredictionRequest):
     if not app_state["models_trained"]:
         if not app_state["training_in_progress"]:
             asyncio.create_task(initialize_models())
-        raise HTTPException(
-            status_code=503,
-            detail="Models are still training. Please try again in a few minutes.",
-        )
+        # Fall back to mock prediction instead of blocking the frontend
+        logger.warning(f"⚠️ Models not trained yet — returning mock prediction for {request.symbol}")
+        prediction = generate_mock_prediction(symbol=request.symbol, timeframe=request.timeframe)
+        return PredictionResponse(**prediction)
 
     try:
         logger.info(
@@ -353,10 +383,10 @@ async def get_prediction(request: PredictionRequest):
             if agg:
                 recent_data = await agg.fetch_historical_data(days=30)
             else:
-                recent_data = generate_mock_historical_data(30)
+                recent_data = generate_mock_historical_data(30, symbol=request.symbol)
         except Exception as e:
             logger.warning(f"⚠️ Using mock data: {e}")
-            recent_data = generate_mock_historical_data(30)
+            recent_data = generate_mock_historical_data(30, symbol=request.symbol)
 
         if not recent_data or len(recent_data) < 20:
             raise HTTPException(
@@ -368,8 +398,8 @@ async def get_prediction(request: PredictionRequest):
             prediction = await pred.predict(recent_data, request.timeframe)
         else:
             # Use mock prediction
-            current_price = recent_data[-1]["price"] if recent_data else 0.20
-            prediction = generate_mock_prediction(current_price)
+            current_price = recent_data[-1]["price"] if recent_data else None
+            prediction = generate_mock_prediction(current_price, request.symbol, request.timeframe)
 
         # Update app state
         app_state["last_prediction"] = prediction["timestamp"]
@@ -379,7 +409,7 @@ async def get_prediction(request: PredictionRequest):
     except Exception as e:
         logger.error(f"❌ Prediction generation failed: {e}")
         # Return mock prediction as fallback
-        prediction = generate_mock_prediction()
+        prediction = generate_mock_prediction(symbol=request.symbol, timeframe=request.timeframe)
         return PredictionResponse(**prediction)
 
 

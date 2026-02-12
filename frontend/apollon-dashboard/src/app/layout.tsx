@@ -16,6 +16,16 @@ export const metadata: Metadata = {
   title: "Apollon - Multichain ZK Price Oracle",
   description:
     "Zero-knowledge price predictions powered by ML ensemble models on NEAR Protocol with cross-chain capabilities",
+  icons: {
+    icon: "/apollon_logo.jpg",
+    apple: "/apollon_logo.jpg",
+  },
+  openGraph: {
+    title: "Apollon - Multichain ZK Price Oracle",
+    description:
+      "Zero-knowledge price predictions powered by ML ensemble models on NEAR Protocol with cross-chain capabilities",
+    images: ["/apollon_logo.jpg"],
+  },
 };
 
 export default function RootLayout({

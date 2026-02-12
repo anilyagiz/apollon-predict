@@ -5,16 +5,12 @@
   "version": "2.0.0",
   "description": "Zero-knowledge price predictions powered by ML ensemble models on NEAR Protocol with Aurora and cross-chain capabilities",
   "icons": {
-    "16": "icon-16.png",
-    "48": "icon-48.png",
-    "128": "icon-128.png"
+    "128": "apollon_logo.jpg"
   },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icon-16.png",
-      "48": "icon-48.png",
-      "128": "icon-128.png"
+      "128": "apollon_logo.jpg"
     },
     "default_title": "Apollon Oracle"
   },
