@@ -37,7 +37,7 @@ apollon/
 │       ├── near-client.ts   # NEAR contract interactions
 │       └── solana-client.ts # Solana integration (stub)
 ├── frontend/
-│   └── algo-zk-dashboard/   # Next.js dashboard (Black theme)
+│   └── apollon-dashboard/   # Next.js dashboard (Black theme)
 │       ├── TokenSwap.tsx     # Cross-chain swap component
 │       ├── IntentSwapPanel.tsx  # Prediction payment component
 │       └── AgentStatus.tsx   # Oracle agent monitoring
@@ -109,7 +109,7 @@ python server.py
 2. **Frontend:**
 
 ```bash
-cd frontend/algo-zk-dashboard
+cd frontend/apollon-dashboard
 npm install
 npm run dev
 ```

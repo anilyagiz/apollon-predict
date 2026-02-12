@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'frontend/algo-zk-dashboard/**'
+      - 'frontend/apollon-dashboard/**'
       - '.github/workflows/deploy-frontend.yml'
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          cd frontend/algo-zk-dashboard
+          cd frontend/apollon-dashboard
           npm ci
           
       - name: Link SDK
@@ -28,12 +28,12 @@ jobs:
           cd sdk/typescript
           npm ci
           npm link
-          cd ../../frontend/algo-zk-dashboard
+          cd ../../frontend/apollon-dashboard
           npm link @apollon/near-sdk
           
       - name: Build
         run: |
-          cd frontend/algo-zk-dashboard
+          cd frontend/apollon-dashboard
           npm run build
           
       - name: Deploy to Vercel
@@ -42,4 +42,4 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./frontend/algo-zk-dashboard/dist
+          working-directory: ./frontend/apollon-dashboard/dist

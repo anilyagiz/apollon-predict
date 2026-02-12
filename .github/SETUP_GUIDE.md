@@ -52,7 +52,7 @@ The API will be available at `http://localhost:8000`
 ### 4. Frontend Setup
 
 ```bash
-cd frontend/algo-zk-dashboard
+cd frontend/apollon-dashboard
 
 # Install dependencies
 npm install
@@ -101,7 +101,7 @@ docker-compose up -d
 docker build -t apollon-api ./backend/api
 
 # Build Frontend
-docker build -t apollon-frontend ./frontend/algo-zk-dashboard
+docker build -t apollon-frontend ./frontend/apollon-dashboard
 
 # Build ZK Service
 docker build -t apollon-zk ./backend/zk-privacy
@@ -182,7 +182,7 @@ PREDICTION_CACHE_MINUTES=5
 
 ### Frontend Configuration
 
-Edit `frontend/algo-zk-dashboard/.env.local`:
+Edit `frontend/apollon-dashboard/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -209,7 +209,7 @@ cargo test
 ### Run Frontend Tests
 
 ```bash
-cd frontend/algo-zk-dashboard
+cd frontend/apollon-dashboard
 npm test
 ```
 

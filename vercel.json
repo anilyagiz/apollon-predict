@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd frontend/algo-zk-dashboard && npm run build",
-  "outputDirectory": "frontend/algo-zk-dashboard/.next",
-  "installCommand": "cd frontend/algo-zk-dashboard && npm install"
+  "buildCommand": "cd frontend/apollon-dashboard && npm run build",
+  "outputDirectory": "frontend/apollon-dashboard/.next",
+  "installCommand": "cd frontend/apollon-dashboard && npm install"
 }

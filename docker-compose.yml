@@ -47,7 +47,7 @@ services:
   # Frontend Dashboard
   frontend:
     build:
-      context: ./frontend/algo-zk-dashboard
+      context: ./frontend/apollon-dashboard
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -56,7 +56,7 @@ services:
     depends_on:
       - api
     volumes:
-      - ./frontend/algo-zk-dashboard:/app
+      - ./frontend/apollon-dashboard:/app
       - /app/node_modules
     restart: unless-stopped
 

@@ -108,7 +108,7 @@ setup_zk() {
 setup_frontend() {
     print_status "Setting up Frontend..."
     
-    cd frontend/algo-zk-dashboard || exit
+    cd frontend/apollon-dashboard || exit
     
     # Install dependencies
     if [ ! -d "node_modules" ]; then
@@ -149,7 +149,7 @@ start_backend() {
 # Start Frontend
 start_frontend() {
     print_status "Starting Frontend..."
-    cd frontend/algo-zk-dashboard || exit
+    cd frontend/apollon-dashboard || exit
     
     # Start Next.js in background
     npm run dev &
