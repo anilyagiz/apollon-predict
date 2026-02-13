@@ -16,8 +16,8 @@ services:
   # Main API Server
   api:
     build:
-      context: ./backend
-      dockerfile: api/Dockerfile
+      context: ./backend/api
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
