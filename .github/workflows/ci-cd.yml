@@ -97,9 +97,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Skip frontend tests
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dependencies
       run: |
-        echo "Frontend tests temporarily skipped"
+        cd frontend/apollon-dashboard
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd frontend/apollon-dashboard
+        npm run build
 
   test-zk:
     runs-on: ubuntu-latest
