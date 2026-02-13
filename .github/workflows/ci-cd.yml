@@ -152,11 +152,11 @@ jobs:
     
     - name: Build API Docker image
       run: |
-        docker build -t apollon-oracle-api:latest -f ./backend/api/Dockerfile ./backend
+        docker build -t apollon-oracle-api:latest ./backend
     
     - name: Build Frontend Docker image
       run: |
-        docker build -t apollon-oracle-frontend:latest -f ./frontend/apollon-dashboard/Dockerfile ./frontend
+        docker build -t apollon-oracle-frontend:latest ./frontend/apollon-dashboard
 
   deploy-testnet:
     runs-on: ubuntu-latest
