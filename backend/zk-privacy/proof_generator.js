@@ -16,12 +16,62 @@ class ZKProofGenerator {
     }
 
     /**
+     * Check if WASM file is a placeholder (not real compiled circuit)
+     * @returns {Boolean} True if WASM is a placeholder
+     */
+    isWasmPlaceholder() {
+        try {
+            const fs = require('fs');
+            const content = fs.readFileSync(this.wasmFile, 'utf8');
+            return content.startsWith('//') || content.includes('placeholder');
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
+     * Generate mock ZK proof for development/CI (when real WASM not available)
+     * @param {Object} predictionData - The prediction data from ML models
+     * @returns {Object} Mock ZK proof object
+     */
+    async generateMockProof(predictionData) {
+        const witness = this.prepareWitness(predictionData);
+        
+        console.log("⚠️  Generating MOCK ZK proof (WASM placeholder detected)");
+        console.log("   For real proofs, compile circuit with: circom circuits/prediction_verification.circom --wasm --o build/");
+        console.log("   Predicted price:", witness.predicted_price / 1000);
+        
+        // Return a mock proof structure
+        return {
+            proof: {
+                pi_a: ["mock_proof_a1", "mock_proof_a2"],
+                pi_b: [["mock_proof_b1", "mock_proof_b2"], ["mock_proof_b3", "mock_proof_b4"]],
+                pi_c: ["mock_proof_c1", "mock_proof_c2"],
+                protocol: "groth16_mock"
+            },
+            publicSignals: [witness.predicted_price.toString()],
+            metadata: {
+                predicted_price: witness.predicted_price / 1000,
+                timestamp: Date.now(),
+                generation_time_ms: 0,
+                circuit_hash: "MOCK_91d0ceb6904b3525...",
+                mock_mode: true
+            }
+        };
+    }
+
+    /**
      * Generate ZK proof for ensemble prediction
      * @param {Object} predictionData - The prediction data from ML models
      * @returns {Object} ZK proof object
      */
     async generateProof(predictionData) {
         try {
+            // Check if using placeholder WASM (CI/development mode)
+            if (this.isWasmPlaceholder()) {
+                return await this.generateMockProof(predictionData);
+            }
+
             // Extract and scale prediction data
             const witness = this.prepareWitness(predictionData);
             

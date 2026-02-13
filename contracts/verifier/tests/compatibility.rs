@@ -2,7 +2,6 @@
 
 use ark_bn254::Fr;
 use ark_ec::AffineRepr;
-use ark_ff::Zero;
 use verifier::{create_dummy_proof, SnarkJSProof};
 
 #[test]

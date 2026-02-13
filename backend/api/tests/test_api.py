@@ -13,6 +13,11 @@ import os
 
 # Add parent directories to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add backend root to path for ml_engine and data_aggregator imports
+backend_root = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+sys.path.insert(0, backend_root)
 
 from server import app, app_state, initialize_models
 from ml_engine.ensemble_predictor import EnsemblePredictionEngine

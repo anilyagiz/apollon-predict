@@ -1,7 +1,6 @@
 //! Minimal test for proof parsing
 
 use ark_bn254::{Fr, G1Affine, G2Affine};
-use ark_ec::AffineRepr;
 use ark_ff::Zero;
 
 /// SnarkJS proof format as received from JavaScript
