@@ -9,24 +9,22 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
-    nodejs \
-    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy ML Engine and Data Aggregator
+# Copy all backend modules
 COPY ml-engine /app/ml-engine
 COPY data-aggregator /app/data-aggregator
 COPY zk-privacy /app/zk-privacy
-
-# Copy API code
-COPY . /app/api
+COPY api /app/api
 
 # Set Python path
-ENV PYTHONPATH=/app:/app/ml-engine:/app/data-aggregator
+ENV PYTHONPATH=/app
+ENV API_HOST=0.0.0.0
+ENV API_PORT=8000
 
 # Expose port
 EXPOSE 8000
