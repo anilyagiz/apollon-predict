@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   # Redis for caching
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -18,16 +16,17 @@ services:
   # Main API Server
   api:
     build:
-      context: ./backend/api
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: api/Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://redis:6380
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - DEBUG=true
       - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
     env_file:
       - .env
     depends_on:
@@ -49,7 +48,7 @@ services:
   # Frontend Dashboard
   frontend:
     build:
-      context: ./frontend/algo-zk-dashboard
+      context: ./frontend/apollon-dashboard
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -58,7 +57,7 @@ services:
     depends_on:
       - api
     volumes:
-      - ./frontend/algo-zk-dashboard:/app
+      - ./frontend/apollon-dashboard:/app
       - /app/node_modules
     restart: unless-stopped
 
@@ -72,6 +71,39 @@ services:
     volumes:
       - ./backend/zk-privacy:/app
     restart: unless-stopped
+
+  # Shade Agent - Autonomous TEE-based Multichain Price Oracle
+  shade-agent:
+    build:
+      context: ./backend/shade-agent
+      dockerfile: Dockerfile
+    ports:
+      - "3100:3100"
+    environment:
+      - PORT=3100
+      - NEAR_NETWORK=${NEAR_NETWORK:-testnet}
+      - NEAR_NODE_URL=${NEAR_NODE_URL:-https://rpc.testnet.near.org}
+      - NEAR_PUBLISHER_CONTRACT=${NEAR_PUBLISHER_CONTRACT:-apollon-publisher.testnet}
+      - NEAR_AGENT_ACCOUNT_ID=${NEAR_AGENT_ACCOUNT_ID:-}
+      - NEAR_AGENT_PRIVATE_KEY=${NEAR_AGENT_PRIVATE_KEY:-}
+      - ML_API_URL=http://api:8000
+      - AGENT_AUTO_START=${SHADE_AGENT_ENABLED:-false}
+      - AGENT_CYCLE_INTERVAL_MS=30000
+      - SHADE_AGENT_MAX_ACTIONS_PER_CYCLE=${SHADE_AGENT_MAX_ACTIONS_PER_CYCLE:-10}
+      - TEE_ENABLED=${TEE_ENABLED:-false}
+      - TEE_TYPE=${TEE_TYPE:-development}
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   redis_data:

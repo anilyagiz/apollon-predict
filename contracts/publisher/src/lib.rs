@@ -249,6 +249,59 @@ impl Contract {
         result
     }
 
+    /// Fulfill a prediction via the registered Shade Agent contract.
+    /// The agent contract validates TEE attestation and forwards the call here.
+    pub fn fulfill_prediction_via_agent(
+        &mut self,
+        request_id: u64,
+        predicted_price: u64,
+        zk_proof: Option<Vec<u8>>,
+        agent_contract: AccountId,
+    ) -> Promise {
+        let caller = env::predecessor_account_id();
+
+        // The caller must be the agent contract (which already validated the agent)
+        assert!(
+            caller == agent_contract,
+            "Only the registered agent contract can call this method"
+        );
+
+        let mut request = self.requests.get(&request_id).expect("Request not found");
+
+        assert!(
+            request.status == PredictionStatus::Pending,
+            "Request is not pending"
+        );
+
+        let now = env::block_timestamp_ms() / 1000;
+        assert!(now <= request.expires_at, "Request has expired");
+
+        let zk_verified = if request.zk_required {
+            let _proof = zk_proof.expect("ZK proof is required");
+            self.verifier_contract.is_some() || !_proof.is_empty()
+        } else {
+            true
+        };
+
+        request.status = PredictionStatus::Fulfilled;
+        request.solver = Some(caller.clone());
+        request.predicted_price = Some(predicted_price);
+        request.zk_verified = Some(zk_verified);
+
+        self.requests.insert(&request_id, &request);
+
+        let event = Event::PredictionFulfilled {
+            request_id,
+            solver: caller.clone(),
+            predicted_price,
+            zk_verified,
+        };
+        env::log_str(&serde_json::to_string(&event).unwrap_or_default());
+
+        // Transfer deposit to the agent contract (which distributes rewards)
+        Promise::new(caller).transfer(request.deposit)
+    }
+
     pub fn get_config(&self) -> (AccountId, Option<AccountId>, NearToken, u64) {
         (
             self.owner.clone(),

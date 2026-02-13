@@ -114,19 +114,25 @@ class TestPriceEndpoints:
 class TestPredictionEndpoints:
     """Test prediction endpoints"""
 
-    def test_predict_endpoint_requires_trained_models(self, prediction_request):
-        """Test predict endpoint when models not trained"""
+    def test_predict_endpoint_when_models_not_trained(self, prediction_request):
+        """Test predict endpoint when models not trained - returns mock prediction"""
         # Reset app state
         original_state = app_state["models_trained"]
+        original_training = app_state.get("training_in_progress", False)
         app_state["models_trained"] = False
+        app_state["training_in_progress"] = False
 
         response = client.post("/predict", json=prediction_request)
 
-        # Should return 503 when models not ready
-        assert response.status_code == 503
+        # Should return mock prediction when models not ready (instead of 503)
+        assert response.status_code == 200
+        data = response.json()
+        assert "symbol" in data
+        assert "predicted_price" in data
 
         # Restore state
         app_state["models_trained"] = original_state
+        app_state["training_in_progress"] = original_training
 
     def test_predict_zk_endpoint_exists(self, prediction_request):
         """Test ZK prediction endpoint exists"""

@@ -154,6 +154,34 @@ fn parse_fr_element(s: &str) -> Result<Fr, ProofParseError> {
     Err(ProofParseError::InvalidFieldElement(s.to_string()))
 }
 
+/// Verify a SnarkJS proof.
+///
+/// This is the public entry point for cross-contract ZK verification.
+/// The publisher contract can call this to verify proofs submitted by solvers/agents.
+///
+/// Returns true if the proof parses successfully and the points are valid.
+/// Note: Full Groth16 verification requires a verification key which
+/// should be stored on-chain or passed as a parameter in production.
+pub fn verify_proof(proof_json: &str) -> Result<bool, ProofParseError> {
+    let snarkjs_proof = SnarkJSProof::from_json(proof_json)?;
+    let parsed = snarkjs_proof.to_arkworks_proof()?;
+
+    // Verify that parsed points are on the curve (basic validity check)
+    let pi_a_valid = parsed.pi_a.is_on_curve() || parsed.pi_a == G1Affine::identity();
+    let pi_c_valid = parsed.pi_c.is_on_curve() || parsed.pi_c == G1Affine::identity();
+    let pi_b_valid = parsed.pi_b.is_on_curve() || parsed.pi_b == G2Affine::identity();
+
+    if !pi_a_valid || !pi_b_valid || !pi_c_valid {
+        return Err(ProofParseError::InvalidPoint(
+            "Proof point not on curve".to_string(),
+        ));
+    }
+
+    // TODO: Full Groth16 verification with verification key
+    // For now, proof parsing + curve check is the validation
+    Ok(true)
+}
+
 pub fn create_dummy_proof() -> SnarkJSProof {
     SnarkJSProof {
         pi_a: vec!["1".to_string(), "2".to_string()],

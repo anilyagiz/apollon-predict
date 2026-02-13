@@ -9,11 +9,11 @@ import dynamic from "next/dynamic";
 import {
   TrendingUp,
   TrendingDown,
-  Activity,
-  Zap,
+  CircleDollarSign,
+  RefreshCcw,
   Pause,
   Play,
-  BarChart3,
+  ChartLine,
 } from "lucide-react";
 
 // Dynamic import for ApexCharts (client-side only)
@@ -317,7 +317,7 @@ export default function AdvancedRealTimeChart() {
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div>
           <CardTitle className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="w-6 h-6 text-neutral-400" />
+            <CircleDollarSign className="w-6 h-6 text-blue-400" />
             Advanced Real-Time ALGO Chart
             <Badge
               variant="secondary"
@@ -352,7 +352,7 @@ export default function AdvancedRealTimeChart() {
             size="sm"
             className="border-white/20 text-white hover:bg-white/10"
           >
-            <Zap className="w-4 h-4" />
+            <RefreshCcw className="w-4 h-4" />
           </Button>
         </div>
       </CardHeader>
@@ -440,7 +440,7 @@ export default function AdvancedRealTimeChart() {
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-4">
-                <BarChart3 className="w-12 h-12 text-gray-500 mx-auto animate-pulse" />
+                <ChartLine className="w-12 h-12 text-gray-500 mx-auto animate-pulse" />
                 <div className="text-gray-400">
                   Collecting real-time data...
                 </div>

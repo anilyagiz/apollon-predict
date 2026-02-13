@@ -1,15 +1,17 @@
-# Apollon - NEAR ZK Oracle
+# Apollon - Multichain ZK Price Oracle
 
-A privacy-enhanced price prediction oracle for NEAR Protocol using Zero-Knowledge proofs and ensemble machine learning models.
+A privacy-enhanced multichain price prediction oracle for NEAR Protocol using Zero-Knowledge proofs, ensemble machine learning models, NEAR Intents for cross-chain interoperability, and a TEE-based Shade Agent for autonomous prediction fulfillment.
 
 ## Project Overview
 
-This project implements a sophisticated price prediction oracle on NEAR Protocol that combines:
+Apollon is a **multichain oracle** between **NEAR** and **Solana** (planned) that combines:
 
-- **Ensemble ML Models**: LSTM, GRU, Prophet, and XGBoost for robust predictions
+- **Ensemble ML Models**: LSTM, GRU, Prophet, and XGBoost for robust price predictions
 - **Multi-Source Data**: CoinGecko and CoinMarketCap price aggregation
 - **Zero-Knowledge Privacy**: ZK-SNARK proof verification using snarkjs and arkworks
-- **NEAR Integration**: Native smart contracts with Rust
+- **NEAR Intents**: Cross-chain token swaps and intent-based prediction payments (14+ chains)
+- **Shade Agent**: Autonomous TEE-based oracle agent for prediction fulfillment
+- **NEAR Smart Contracts**: Publisher, verifier, and agent contracts in Rust
 - **Cross-Platform SDKs**: TypeScript and Python SDKs for easy integration
 
 ## Architecture
@@ -18,158 +20,226 @@ This project implements a sophisticated price prediction oracle on NEAR Protocol
 apollon/
 ├── contracts/
 │   ├── publisher/           # NEAR oracle publisher contract (Rust)
-│   └── verifier/            # ZK proof verifier contract (Rust + arkworks)
+│   ├── verifier/            # ZK proof verifier contract (Rust + arkworks)
+│   └── agent/               # Shade Agent restriction contract (Rust)
 ├── sdk/
-│   ├── typescript/          # TypeScript SDK for NEAR integration
-│   └── python/              # Python SDK (Python 3.12+ compatible)
+│   ├── typescript/          # TypeScript SDK (NEAR + Intents + Swaps)
+│   └── python/              # Python SDK (NEAR + Intents + Swaps)
 ├── backend/
 │   ├── api/                 # REST API server (FastAPI)
+│   │   ├── server.py        # Main API with prediction, swap, intent, agent endpoints
+│   │   └── intents_service.py  # NEAR Intents 1Click API client
 │   ├── ml-engine/           # ML prediction models
 │   ├── data-aggregator/     # Multi-source price data collection
-│   └── zk-privacy/          # Zero-Knowledge circuits (Circom)
+│   ├── zk-privacy/          # Zero-Knowledge circuits (Circom)
+│   └── shade-agent/         # Shade Agent (Hono + TypeScript)
+│       ├── oracle-agent.ts  # Prediction fulfillment loop
+│       ├── near-client.ts   # NEAR contract interactions
+│       └── solana-client.ts # Solana integration (stub)
 ├── frontend/
-│   └── algo-zk-dashboard/   # Next.js prediction dashboard (Black theme)
-└── scripts/                 # Deployment scripts
+│   └── apollon-dashboard/   # Next.js dashboard (Black theme)
+│       ├── TokenSwap.tsx     # Cross-chain swap component
+│       ├── IntentSwapPanel.tsx  # Prediction payment component
+│       └── AgentStatus.tsx   # Oracle agent monitoring
+└── docker-compose.yml       # Full stack orchestration
 ```
 
-## Current Status
+## Features
 
-### Implemented Features
+### Core Oracle
+- ML ensemble price predictions (LSTM 35%, GRU 25%, Prophet 25%, XGBoost 15%)
+- ZK-SNARK privacy for model weights and individual predictions
+- Multi-source real-time price aggregation
 
-- [x] **NEAR Smart Contracts**
-  - Publisher contract with request/fulfill/cancel functionality
-  - Verifier contract with snarkjs proof parsing (arkworks integration)
-  - Admin functions and event emission
-  - 13/13 tests passing
+### NEAR Intents Integration
+- Cross-chain token swaps across 14+ blockchains
+- Intent-based prediction payments from any chain
+- Powered by the 1Click API (quote, deposit, status)
 
-- [x] **SDKs**
-  - TypeScript SDK with full NEAR integration
-  - Python SDK (Python 3.12+ compatible, httpx-based)
-  - fulfillPrediction method for solvers
+### Shade Agent
+- Autonomous TEE-based oracle agent
+- Watches for pending prediction requests on NEAR
+- Calls ML API and fulfills predictions on-chain
+- TEE remote attestation for verifiability
+- Restricted to approved contract methods via agent contract
 
-- [x] **Frontend**
-  - Black/minimalist UI theme
-  - Real-time NEAR price display (CoinGecko API)
-  - Interactive prediction charts
-  - NEAR Wallet integration ready
-
-- [x] **Backend**
-  - Mock API server for development
-  - ML ensemble prediction engine
-  - Price aggregation from multiple sources
+### Smart Contracts
+- **Publisher**: Request/fulfill/cancel predictions with deposits
+- **Verifier**: ZK-SNARK proof parsing and validation (arkworks)
+- **Agent**: TEE-restricted signature requests and action allowlists
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- Python 3.12+
+- Docker & Docker Compose (recommended)
+- Node.js 18+ / Python 3.11+
 - Rust (for contract development)
-- NEAR CLI (optional, for deployment)
 
-### Installation
-
-1. **Clone the repository:**
+### Using Docker (Recommended)
 
 ```bash
 git clone https://github.com/anilyagiz/near-apollon.git
 cd near-apollon
+
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your NEAR account details
+
+# Start all services
+docker compose up --build
 ```
 
-2. **Install contract dependencies:**
+Services:
+- **API**: http://localhost:8000
+- **Frontend**: http://localhost:3000
+- **Shade Agent**: http://localhost:3100
+- **Redis**: localhost:6379
+
+### Manual Setup
+
+1. **Backend API:**
 
 ```bash
-# Rust contracts
+cd backend/api
+pip install -r requirements.txt
+python server.py
+```
+
+2. **Frontend:**
+
+```bash
+cd frontend/apollon-dashboard
+npm install
+npm run dev
+```
+
+3. **Shade Agent:**
+
+```bash
+cd backend/shade-agent
+npm install
+npm run dev
+```
+
+4. **Contracts:**
+
+```bash
 cd contracts/publisher
-cargo check --target wasm32-unknown-unknown
+cargo test
+cargo build --target wasm32-unknown-unknown --release
 
 cd ../verifier
-cargo test  # 13/13 tests passing
+cargo test
+
+cd ../agent
+cargo build --target wasm32-unknown-unknown --release
 ```
 
-3. **Install SDKs:**
+## API Endpoints
 
-```bash
-# TypeScript SDK
-cd sdk/typescript
-npm install
-npm run build
+### Prediction & Price
 
-# Python SDK
-cd ../python
-pip install -e .
-```
+| Endpoint | Description |
+| --- | --- |
+| `GET /health` | API health and model status |
+| `GET /price/near` | Current NEAR price (aggregated) |
+| `POST /predict` | ML ensemble prediction |
+| `POST /predict-zk` | ZK-enhanced prediction |
+| `GET /models/status` | Model training status |
 
-4. **Start the backend mock server:**
+### Cross-Chain Swap (NEAR Intents)
 
-```bash
-cd backend
-python mock_server.py
-```
+| Endpoint | Description |
+| --- | --- |
+| `GET /swap/tokens?chain=` | Supported tokens (14+ chains) |
+| `GET /swap/chains` | Supported blockchains |
+| `POST /swap/quote` | Get swap quote |
+| `POST /swap/execute` | Execute swap (returns deposit address) |
+| `GET /swap/status/{addr}` | Swap execution status |
+| `POST /swap/deposit` | Submit deposit tx hash |
 
-The API will be available at `http://localhost:8000`
+### Intent Payments
 
-5. **Start the frontend:**
+| Endpoint | Description |
+| --- | --- |
+| `POST /intents/prediction/quote` | Quote for cross-chain prediction payment |
+| `POST /intents/prediction/execute` | Execute cross-chain prediction payment |
+| `GET /intents/status/{addr}` | Payment status |
 
-```bash
-cd frontend/algo-zk-dashboard
-npm install
-npm run dev -- --port 3001
-```
+### Oracle Agent
 
-Visit `http://localhost:3001`
+| Endpoint | Description |
+| --- | --- |
+| `GET /agent/status` | Shade Agent status |
+| `GET /agent/attestation` | TEE remote attestation data |
 
 ## Smart Contracts
 
 ### Publisher Contract
 
-Handles prediction requests and fulfillment:
-
 ```rust
+// Request a prediction (user deposits NEAR)
 pub fn request_prediction(&mut self, asset: String, timeframe: String, zk_required: bool) -> u64
+
+// Fulfill a prediction (solver/agent)
 pub fn fulfill_prediction(&mut self, request_id: u64, predicted_price: u64, zk_proof: Option<Vec<u8>>)
+
+// Fulfill via registered Shade Agent
+pub fn fulfill_prediction_via_agent(&mut self, request_id: u64, predicted_price: u64, zk_proof: Option<Vec<u8>>, agent_contract: AccountId)
+
+// Cancel and get refund
 pub fn cancel_request(&mut self, request_id: u64)
 ```
 
-**Events:**
-- `PredictionRequested`
-- `PredictionFulfilled`
-- `PredictionCancelled`
-
 ### Verifier Contract
 
-Parses and validates snarkjs ZK proofs:
-
 ```rust
-pub fn parse_proof(&self, proof_json: String) -> Result<ArkworksProof, ProofParseError>
+// Parse and validate ZK proof
+pub fn verify_proof(proof_json: &str) -> Result<bool, ProofParseError>
 ```
 
-Supports both decimal and hex field element formats.
+### Agent Contract
+
+```rust
+// Register TEE agent with attestation
+pub fn register_agent(&mut self, code_hash: String, attestation_quote: Option<String>, tee_type: String)
+
+// Request signature (restricted to allowed actions)
+pub fn request_signature(&mut self, target_contract: AccountId, method_name: String, args: String) -> Promise
+```
 
 ## SDK Usage
 
 ### TypeScript
 
 ```typescript
-import { NearOracleClient } from '@apollon/near-sdk';
+import { NearOracleClient } from "@apollon/oracle-sdk";
 
 const client = new NearOracleClient({
-  networkId: 'testnet',
-  publisherContract: 'apollon-publisher.testnet',
-  verifierContract: 'apollon-verifier.testnet'
+  networkId: "testnet",
+  publisherContract: "apollon-publisher.testnet",
+  apiUrl: "http://localhost:8000",
 });
 
 await client.initialize();
 
 // Request prediction
-const requestId = await client.requestPrediction({
-  asset: 'NEAR',
-  timeframe: '24h',
-  zkRequired: true
-}, '0.1');
+const requestId = await client.requestPrediction(
+  { asset: "NEAR", timeframe: "24h", zkRequired: true },
+  "0.1"
+);
 
-// Get request status
-const request = await client.getRequest(requestId);
+// Cross-chain swap
+const quote = await client.getSwapQuote({
+  originAsset: "nep141:wrap.near",
+  destinationAsset: "solana:native",
+  amount: "1000000000000000000000000",
+  recipient: "YourSolanaAddress",
+});
+
+// Agent status
+const agent = await client.getAgentStatus();
 ```
 
 ### Python
@@ -178,8 +248,8 @@ const request = await client.getRequest(requestId);
 from apollon_near_sdk import NearOracleClient, NearOracleConfig
 
 config = NearOracleConfig(
-    network_id="testnet",
-    publisher_contract="apollon-publisher.testnet"
+    publisher_contract="apollon-publisher.testnet",
+    api_url="http://localhost:8000",
 )
 
 client = NearOracleClient(config)
@@ -187,118 +257,94 @@ await client.initialize()
 
 # Get pending requests
 pending = await client.get_pending_requests(limit=10)
+
+# Cross-chain swap quote
+quote = await client.get_swap_quote(
+    origin_asset="nep141:wrap.near",
+    destination_asset="solana:native",
+    amount="1000000000000000000000000",
+    recipient="YourSolanaAddress",
+)
+
+# Agent status
+agent = await client.get_agent_status()
 ```
-
-## Frontend
-
-### Black/Minimalist Theme
-
-The frontend features a clean black theme with white text:
-- Background: `bg-black`
-- Cards: `bg-neutral-900` with `border-neutral-800`
-- Text: White and neutral gray tones
-- No colorful gradients
-
-### NEAR Price Display
-
-Real-time NEAR price from CoinGecko API:
-- Current price
-- 24h volume
-- Price change percentage
 
 ## ML Models
 
 ### Ensemble Components
 
-1. **LSTM (Long Short-Term Memory)**
-   - Weight: 35%
-   - Best for: Sequential price patterns
-
-2. **GRU (Gated Recurrent Unit)**
-   - Weight: 25%
-   - Best for: Faster training
-
-3. **Prophet (Facebook's time series)**
-   - Weight: 25%
-   - Best for: Trend and seasonality
-
-4. **XGBoost (Gradient Boosting)**
-   - Weight: 15%
-   - Best for: Non-linear relationships
+| Model | Weight | Strength |
+| --- | --- | --- |
+| LSTM | 35% | Sequential price patterns |
+| GRU | 25% | Faster training, similar accuracy |
+| Prophet | 25% | Trend and seasonality detection |
+| XGBoost | 15% | Non-linear relationships |
 
 ## Zero-Knowledge Implementation
 
-### Current Features
-
-- **snarkjs Integration**: Proof parsing from browser/node
-- **arkworks**: Rust-side proof validation
-- **Groth16**: Verification algorithm
-- **BN254 Curve**: Ethereum/NEAR compatible
-
 ### ZK Flow
 
-1. ML models generate prediction
-2. snarkjs creates ZK proof
-3. Proof submitted to NEAR contract
-4. Verifier contract validates with arkworks
+1. ML models generate price prediction
+2. snarkjs creates Groth16 ZK proof (hiding model weights)
+3. Proof submitted to NEAR publisher contract
+4. Verifier contract validates proof with arkworks
 5. Prediction accepted if proof valid
+
+### Privacy Guarantees
+
+- Model weights remain hidden (ZK-SNARKs)
+- Individual model predictions are private
+- Only the final ensemble price is revealed
+- Proof of correct computation provided
+
+## Tech Stack
+
+- **Blockchain**: NEAR Protocol (primary), Solana (planned)
+- **Smart Contracts**: Rust + near-sdk 5.x
+- **ZK**: snarkjs + arkworks (Groth16, BN254)
+- **Cross-Chain**: NEAR Intents (1Click API)
+- **Agent**: Hono + TypeScript (TEE-compatible)
+- **Frontend**: Next.js + TypeScript + Tailwind + Framer Motion
+- **Backend**: Python (FastAPI) + ML (TensorFlow, Prophet, XGBoost)
+- **Infra**: Docker Compose, Redis
+
+## Testing
+
+```bash
+# Contract tests
+cd contracts/verifier && cargo test
+cd contracts/publisher && cargo test
+
+# SDK tests
+cd sdk/typescript && npm test
+cd sdk/python && pytest
+
+# Backend tests
+cd backend/api && pytest
+```
 
 ## Deployment
 
 ### Testnet
 
 ```bash
+cp .env.example .env
+# Configure NEAR testnet accounts
+
 # Deploy contracts
 ./scripts/deploy-testnet.sh
 
-# Build and deploy frontend
-vercel --prod
+# Start services
+docker compose up --build
 ```
 
 ### Mainnet
 
 ```bash
-# Update network in scripts
-export NETWORK=mainnet
-
-# Deploy
+export NEAR_NETWORK=mainnet
 ./scripts/deploy-mainnet.sh
 ```
-
-## Testing
-
-```bash
-# Contract tests
-cd contracts/verifier
-cargo test
-
-# SDK tests
-cd sdk/typescript
-npm test
-
-cd sdk/python
-pytest
-
-# Integration tests
-cd tests
-pytest integration/
-```
-
-## Performance
-
-- **Contract Tests**: 13/13 passing
-- **ZK Proof Parsing**: <100ms
-- **API Response**: <500ms
-- **Frontend Build**: 162 kB
-
-## Tech Stack
-
-- **Blockchain**: NEAR Protocol
-- **Smart Contracts**: Rust + near-sdk-rs
-- **ZK**: snarkjs + arkworks
-- **Frontend**: Next.js + TypeScript + Tailwind
-- **Backend**: Python (FastAPI)
-- **ML**: TensorFlow, Prophet, XGBoost
 
 ## Contributing
 
@@ -306,8 +352,7 @@ pytest integration/
 2. Create feature branch: `git checkout -b feature/new-feature`
 3. Make changes and test
 4. Commit: `git commit -m "feat: add new feature"`
-5. Push: `git push origin feature/new-feature`
-6. Submit pull request
+5. Push and submit pull request
 
 ## License
 
@@ -315,15 +360,15 @@ MIT License - see LICENSE file for details.
 
 ## Acknowledgments
 
-- **NEAR Protocol**: Blockchain infrastructure
-- **snarkjs**: ZK proof generation
-- **arkworks**: Rust ZK library
-- **CryptoPredictions**: ML models inspiration
+- **NEAR Protocol** - Blockchain infrastructure and Intents
+- **snarkjs / arkworks** - ZK proof ecosystem
+- **1Click API** - Cross-chain intent execution
+- **Shade Protocol** - TEE agent framework inspiration
 
 ---
 
-**Status**: Production Ready - NEAR oracle with ZK verification
+**Status**: Active Development
 
-**Live Demo**: Coming soon
+**Chains**: NEAR Protocol (live) | Solana (planned)
 
-**Docs**: [Full Documentation](./docs)
+**Docs**: [SDK Documentation](./sdk/README.md)

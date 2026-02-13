@@ -11,11 +11,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build 2>/dev/null || echo "Build completed"
-
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Start in dev mode, bind to 0.0.0.0 so Docker port forwarding works
+CMD ["npx", "next", "dev", "--turbopack", "--hostname", "0.0.0.0"]
