@@ -44,7 +44,7 @@ export class NearClient {
 
     // Add agent key if provided
     if (this.config.agentAccountId && this.config.agentPrivateKey) {
-      const keyPair = KeyPair.fromString(this.config.agentPrivateKey);
+      const keyPair = KeyPair.fromString(this.config.agentPrivateKey as any);
       await keyStore.setKey(
         this.config.networkId,
         this.config.agentAccountId,
