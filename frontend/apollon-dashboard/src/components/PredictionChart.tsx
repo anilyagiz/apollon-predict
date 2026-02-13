@@ -132,7 +132,7 @@ export default function PredictionChart() {
     generatePrediction(token);
   };
 
-  useEffect(() => { generatePrediction(); }, []);
+  useEffect(() => { generatePrediction(); }, [generatePrediction]);
 
   const dec = selectedToken.priceDecimals;
   const formatPrice = (value: number) => `$${value.toFixed(dec)}`;

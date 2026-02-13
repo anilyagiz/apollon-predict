@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Sparkles,
   Loader2,
@@ -14,6 +12,18 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+interface QuoteData {
+  quote?: {
+    depositAddress?: string;
+    amountIn?: string;
+    amountInFormatted?: string;
+    amountOut?: string;
+    amountOutFormatted?: string;
+    amountOutUsd?: string;
+    timeEstimate?: number;
+  };
+}
+
 type PaymentStatus = "idle" | "quoting" | "quoted" | "executing" | "pending" | "success" | "failed";
 
 export default function IntentSwapPanel() {
@@ -21,7 +31,7 @@ export default function IntentSwapPanel() {
   const [amount, setAmount] = useState("");
   const [refundAddress, setRefundAddress] = useState("");
   const [status, setStatus] = useState<PaymentStatus>("idle");
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<QuoteData | null>(null);
   const [depositAddress, setDepositAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);

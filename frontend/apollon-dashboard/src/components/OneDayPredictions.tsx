@@ -133,7 +133,7 @@ export default function OneDayPredictions() {
 
   useEffect(() => {
     fetchAllPredictions();
-  }, []);
+  }, [fetchAllPredictions]);
 
   const formatPrice = (value: number, decimals: number) =>
     `$${value.toFixed(decimals)}`;

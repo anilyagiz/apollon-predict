@@ -94,7 +94,7 @@ export default function HeroSection() {
     fetchAllPrices();
     const interval = setInterval(fetchAllPrices, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchAllPrices]);
 
   const formatVol = (v?: number) => {
     if (!v) return "--";

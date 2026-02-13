@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeftRight,
   ArrowUpDown,
@@ -75,20 +73,6 @@ export default function TokenSwap() {
       ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
       : "http://localhost:8000";
 
-  // Fetch supported chains on mount
-  useEffect(() => {
-    fetchChains();
-  }, []);
-
-  // Fetch tokens when chain changes
-  useEffect(() => {
-    if (sourceChain) fetchTokens(sourceChain, "source");
-  }, [sourceChain]);
-
-  useEffect(() => {
-    if (destChain) fetchTokens(destChain, "dest");
-  }, [destChain]);
-
   const fetchChains = async () => {
     try {
       const resp = await fetch(`${apiUrl}/swap/chains`);
@@ -117,6 +101,20 @@ export default function TokenSwap() {
       console.error("Failed to fetch tokens:", err);
     }
   };
+
+  // Fetch supported chains on mount
+  useEffect(() => {
+    fetchChains();
+  }, [fetchChains]);
+
+  // Fetch tokens when chain changes
+  useEffect(() => {
+    if (sourceChain) fetchTokens(sourceChain, "source");
+  }, [sourceChain, fetchTokens]);
+
+  useEffect(() => {
+    if (destChain) fetchTokens(destChain, "dest");
+  }, [destChain, fetchTokens]);
 
   const getQuote = useCallback(async () => {
     if (!sourceToken || !destToken || !amount || !recipient) {
@@ -213,7 +211,7 @@ export default function TokenSwap() {
 
     const interval = setInterval(checkStatus, 5000);
     return () => clearInterval(interval);
-  }, [swapStatus, depositAddress]);
+  }, [swapStatus, depositAddress, checkStatus]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);

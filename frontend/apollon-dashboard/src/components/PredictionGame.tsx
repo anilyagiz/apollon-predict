@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy,
-  TrendingUp,
-  TrendingDown,
   Zap,
   Target,
   Flame as FireIcon,

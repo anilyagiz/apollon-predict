@@ -34,7 +34,7 @@ source venv/bin/activate 2>/dev/null || . venv/Scripts/activate 2>/dev/null
 
 # Install dependencies
 echo "📥 Installing dependencies..."
-pip install -q fastapi uvicorn pydantic pandas numpy aiohttp 2>/dev/null || echo "Some packages may already be installed"
+pip install -q -r requirements.txt 2>/dev/null || echo "Some packages may already be installed"
 
 # Start server
 echo ""
