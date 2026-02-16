@@ -46,5 +46,28 @@ services:
       - api
     restart: unless-stopped
 
+  # Shade Agent (TEE Oracle)
+  shade-agent:
+    build:
+      context: ./backend/shade-agent
+      dockerfile: Dockerfile
+    ports:
+      - "3100:3100"
+    environment:
+      - PORT=3100
+      - NEAR_NETWORK=testnet
+      - NEAR_NODE_URL=https://rpc.testnet.near.org
+      - NEAR_PUBLISHER_CONTRACT=apollon-publisher.testnet
+      - ML_API_URL=http://api:8000
+      - AGENT_AUTO_START=true
+      - AGENT_CYCLE_INTERVAL_MS=30000
+      - SHADE_AGENT_MAX_ACTIONS_PER_CYCLE=10
+      - TEE_ENABLED=false
+    env_file:
+      - .env
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   redis_data:
