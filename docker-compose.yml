@@ -22,6 +22,8 @@ services:
       - DEBUG=true
       - LOG_LEVEL=INFO
       - PYTHONPATH=/app
+      - SHADE_AGENT_ENABLED=true
+      - SHADE_AGENT_ENDPOINT=http://shade-agent:3100
     env_file:
       - .env
     depends_on:
