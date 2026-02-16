@@ -6,8 +6,8 @@
     "frontend/apollon-dashboard"
   ],
   "scripts": {
-    "build:sdk": "cd sdk/typescript && npm run build",
-    "build:frontend": "cd frontend/apollon-dashboard && npm run build",
+    "build:sdk": "npm run build --workspace=@apollon/near-sdk",
+    "build:frontend": "npm run build --workspace=apollon-oracle-dashboard",
     "build": "npm run build:sdk && npm run build:frontend"
   }
 }
