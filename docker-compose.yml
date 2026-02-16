@@ -25,8 +25,7 @@ services:
     env_file:
       - .env
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     volumes:
       - ./backend/api:/app/api
       - ./backend/ml-engine:/app/ml-engine
