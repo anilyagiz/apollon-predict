@@ -741,8 +741,8 @@ async def get_near_price():
     except Exception as e:
         logger.warning(f"⚠️ CoinGecko fetch failed: {e}")
 
-    # Return realistic mock data as fallback (Feb 2026 prices)
-    base_price = 3.25 + np.random.uniform(-0.03, 0.03)
+    # Return realistic mock data as fallback (Current prices)
+    base_price = 1.06 + np.random.uniform(-0.02, 0.02)
     return {
         "near": {
             "usd": round(base_price, 6),
@@ -785,8 +785,8 @@ async def get_aurora_price():
     except Exception as e:
         logger.warning(f"⚠️ CoinGecko Aurora fetch failed: {e}")
 
-    # Return realistic mock data as fallback (Feb 2026 prices)
-    base_price = 0.185 + np.random.uniform(-0.005, 0.005)
+    # Return realistic mock data as fallback (Current prices)
+    base_price = 0.031 + np.random.uniform(-0.001, 0.001)
     return {
         "aurora": {
             "usd": round(base_price, 6),
@@ -803,35 +803,35 @@ async def get_aurora_price():
 # Generic Token Price Endpoint (ETH, SOL, ALGO, etc.)
 # =============================================================================
 
-# CoinGecko ID mapping and mock price defaults (Feb 2026 realistic prices)
+# CoinGecko ID mapping and mock price defaults (Current real prices)
 TOKEN_CONFIG = {
     "near": {
         "coingecko_id": "near",
-        "mock_price": 3.25,
+        "mock_price": 1.06,
         "mock_mcap_mult": 1_180_000_000,
         "mock_vol_range": (180_000_000, 350_000_000),
     },
     "aurora": {
         "coingecko_id": "aurora-near",
-        "mock_price": 0.185,
+        "mock_price": 0.031,
         "mock_mcap_mult": 280_000_000,
         "mock_vol_range": (8_000_000, 25_000_000),
     },
     "ethereum": {
         "coingecko_id": "ethereum",
-        "mock_price": 2680.0,
+        "mock_price": 1969.05,
         "mock_mcap_mult": 125_000_000,
         "mock_vol_range": (10_000_000_000, 18_000_000_000),
     },
     "solana": {
         "coingecko_id": "solana",
-        "mock_price": 198.0,
+        "mock_price": 84.68,
         "mock_mcap_mult": 4_200_000,
         "mock_vol_range": (2_000_000_000, 4_000_000_000),
     },
     "algorand": {
         "coingecko_id": "algorand",
-        "mock_price": 0.245,
+        "mock_price": 0.095,
         "mock_mcap_mult": 7_500_000_000,
         "mock_vol_range": (35_000_000, 90_000_000),
     },
