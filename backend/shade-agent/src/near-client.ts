@@ -73,9 +73,8 @@ export class NearClient {
   async getPendingRequests(limit: number = 10): Promise<PendingRequest[]> {
     if (!this.near) throw new Error("NearClient not initialized");
 
-    const viewAccount = await this.near.account(this.config.publisherContract);
-
     try {
+      const viewAccount = await this.near.account(this.config.publisherContract);
       const results = await viewAccount.viewFunction({
         contractId: this.config.publisherContract,
         methodName: "get_pending_requests",
@@ -83,7 +82,11 @@ export class NearClient {
       });
 
       return results as PendingRequest[];
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.type === 'AccountDoesNotExist' || err?.message?.includes("doesn't exist")) {
+        console.log("[NearClient] Publisher contract not deployed, running in mock mode");
+        return [];
+      }
       console.error("[NearClient] Failed to fetch pending requests:", err);
       return [];
     }
@@ -92,9 +95,8 @@ export class NearClient {
   async getRequest(requestId: number): Promise<PendingRequest | null> {
     if (!this.near) throw new Error("NearClient not initialized");
 
-    const viewAccount = await this.near.account(this.config.publisherContract);
-
     try {
+      const viewAccount = await this.near.account(this.config.publisherContract);
       const result = await viewAccount.viewFunction({
         contractId: this.config.publisherContract,
         methodName: "get_request",
@@ -102,7 +104,10 @@ export class NearClient {
       });
 
       return result as PendingRequest | null;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.type === 'AccountDoesNotExist' || err?.message?.includes("doesn't exist")) {
+        return null;
+      }
       console.error(`[NearClient] Failed to fetch request #${requestId}:`, err);
       return null;
     }
