@@ -5,8 +5,8 @@ import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import type { WalletSelector, AccountState } from "@near-wallet-selector/core";
-import type { NearOracleConfig } from "@apollon/near-sdk";
-import { NearOracleClient } from "@apollon/near-sdk";
+import type { NearOracleConfig } from "../../../lib/near-sdk";
+import { NearOracleClient } from "../../../lib/near-sdk";
 import "@near-wallet-selector/modal-ui/styles.css";
 
 interface NearContextType {

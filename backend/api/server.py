@@ -158,6 +158,27 @@ app_state = {
 # Prices are fetched dynamically from CoinGecko and other sources
 _MOCK_BASE_PRICES: dict[str, float] = {}  # Kept for backwards compatibility, not used
 
+# Symbol mapping for CoinGecko API
+SYMBOL_TO_COINGECKO = {
+    "NEARUSD": "near",
+    "NEAR": "near",
+    "ALGOUSD": "algorand",
+    "ALGO": "algorand",
+    "SOLUSD": "solana",
+    "SOL": "solana",
+    "ETHUSD": "ethereum",
+    "ETH": "ethereum",
+    "BTCUSD": "bitcoin",
+    "BTC": "bitcoin",
+    "AURORAUSD": "aurora-near",
+    "AURORA": "aurora-near",
+}
+
+
+def get_coingecko_id(symbol: str) -> str:
+    """Map trading symbol to CoinGecko ID"""
+    return SYMBOL_TO_COINGECKO.get(symbol.upper(), symbol.lower())
+
 
 async def fetch_real_historical_data(days=90, symbol: str = "algorand"):
     """Fetch real historical price data from CoinGecko and other sources"""
@@ -505,12 +526,22 @@ async def get_prediction_with_zk_proof(request: PredictionRequest):
         if zk_integration is not None:
             try:
                 zk_proof_data = {
-                    "ensemble_prediction": prediction.get("ensemble_prediction", prediction.get("predicted_price", 0)),
+                    "ensemble_prediction": prediction.get(
+                        "ensemble_prediction", prediction.get("predicted_price", 0)
+                    ),
                     "confidence": prediction.get("confidence", 0.95),
-                    "lstm_prediction": prediction.get("lstm_prediction", prediction.get("predicted_price", 0)),
-                    "gru_prediction": prediction.get("gru_prediction", prediction.get("predicted_price", 0)),
-                    "prophet_prediction": prediction.get("prophet_prediction", prediction.get("predicted_price", 0)),
-                    "xgboost_prediction": prediction.get("xgboost_prediction", prediction.get("predicted_price", 0)),
+                    "lstm_prediction": prediction.get(
+                        "lstm_prediction", prediction.get("predicted_price", 0)
+                    ),
+                    "gru_prediction": prediction.get(
+                        "gru_prediction", prediction.get("predicted_price", 0)
+                    ),
+                    "prophet_prediction": prediction.get(
+                        "prophet_prediction", prediction.get("predicted_price", 0)
+                    ),
+                    "xgboost_prediction": prediction.get(
+                        "xgboost_prediction", prediction.get("predicted_price", 0)
+                    ),
                 }
                 zk_result = await zk_integration.generate_zk_proof(zk_proof_data)
                 zk_proof = {
@@ -523,7 +554,9 @@ async def get_prediction_with_zk_proof(request: PredictionRequest):
                 }
                 logger.info("✅ Real ZK proof generated successfully")
             except Exception as zk_error:
-                logger.warning(f"⚠ ZK proof generation failed, using fallback: {zk_error}")
+                logger.warning(
+                    f"⚠ ZK proof generation failed, using fallback: {zk_error}"
+                )
                 zk_proof = {
                     "protocol": "groth16",
                     "curve": "bn128",
@@ -554,14 +587,16 @@ async def get_prediction_with_zk_proof(request: PredictionRequest):
         if zk_integration is not None:
             try:
                 mock_pred = generate_mock_prediction()
-                zk_result = await zk_integration.generate_zk_proof({
-                    "ensemble_prediction": mock_pred.get("ensemble_prediction", 0),
-                    "confidence": mock_pred.get("confidence", 0.95),
-                    "lstm_prediction": mock_pred.get("lstm_prediction", 0),
-                    "gru_prediction": mock_pred.get("gru_prediction", 0),
-                    "prophet_prediction": mock_pred.get("prophet_prediction", 0),
-                    "xgboost_prediction": mock_pred.get("xgboost_prediction", 0),
-                })
+                zk_result = await zk_integration.generate_zk_proof(
+                    {
+                        "ensemble_prediction": mock_pred.get("ensemble_prediction", 0),
+                        "confidence": mock_pred.get("confidence", 0.95),
+                        "lstm_prediction": mock_pred.get("lstm_prediction", 0),
+                        "gru_prediction": mock_pred.get("gru_prediction", 0),
+                        "prophet_prediction": mock_pred.get("prophet_prediction", 0),
+                        "xgboost_prediction": mock_pred.get("xgboost_prediction", 0),
+                    }
+                )
                 zk_proof = {
                     **zk_result.get("zk_proof", {}),
                     "protocol": "groth16",
@@ -572,7 +607,7 @@ async def get_prediction_with_zk_proof(request: PredictionRequest):
                 zk_proof = {"protocol": "groth16", "verified": True, "fallback": True}
         else:
             zk_proof = {"protocol": "groth16", "verified": True, "fallback": True}
-        
+
         prediction = generate_mock_prediction()
         zk_response = {
             **prediction,
