@@ -7,11 +7,6 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
 
   # Main API Server
   api:
@@ -38,12 +33,6 @@ services:
       - ./backend/data-aggregator:/app/data-aggregator
       - ./backend/zk-privacy:/app/zk-privacy
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
   # Frontend Dashboard
   frontend:
@@ -56,54 +45,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - api
-    volumes:
-      - ./frontend/apollon-dashboard:/app
-      - /app/node_modules
     restart: unless-stopped
-
-  # ZK Proof Service (optional, for heavy ZK operations)
-  zk-service:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - ./backend:/app
-    restart: unless-stopped
-
-  # Shade Agent - Autonomous TEE-based Multichain Price Oracle
-  shade-agent:
-    build:
-      context: ./backend/shade-agent
-      dockerfile: Dockerfile
-    ports:
-      - "3100:3100"
-    environment:
-      - PORT=3100
-      - NEAR_NETWORK=${NEAR_NETWORK:-testnet}
-      - NEAR_NODE_URL=${NEAR_NODE_URL:-https://rpc.testnet.near.org}
-      - NEAR_PUBLISHER_CONTRACT=${NEAR_PUBLISHER_CONTRACT:-apollon-publisher.testnet}
-      - NEAR_AGENT_ACCOUNT_ID=${NEAR_AGENT_ACCOUNT_ID:-}
-      - NEAR_AGENT_PRIVATE_KEY=${NEAR_AGENT_PRIVATE_KEY:-}
-      - ML_API_URL=http://api:8000
-      - AGENT_AUTO_START=${SHADE_AGENT_ENABLED:-false}
-      - AGENT_CYCLE_INTERVAL_MS=30000
-      - SHADE_AGENT_MAX_ACTIONS_PER_CYCLE=${SHADE_AGENT_MAX_ACTIONS_PER_CYCLE:-10}
-      - TEE_ENABLED=${TEE_ENABLED:-false}
-      - TEE_TYPE=${TEE_TYPE:-development}
-    env_file:
-      - .env
-    depends_on:
-      api:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3100/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
 volumes:
   redis_data:
