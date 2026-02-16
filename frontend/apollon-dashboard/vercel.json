@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "rm -rf node_modules package-lock.json .next && npm install && npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "framework": "nextjs"
