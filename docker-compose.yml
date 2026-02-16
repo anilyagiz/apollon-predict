@@ -17,7 +17,7 @@ services:
   api:
     build:
       context: ./backend
-      dockerfile: api/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -64,12 +64,12 @@ services:
   # ZK Proof Service (optional, for heavy ZK operations)
   zk-service:
     build:
-      context: ./backend/zk-privacy
+      context: ./backend
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
     volumes:
-      - ./backend/zk-privacy:/app
+      - ./backend:/app
     restart: unless-stopped
 
   # Shade Agent - Autonomous TEE-based Multichain Price Oracle
