@@ -741,14 +741,14 @@ async def get_near_price():
     except Exception as e:
         logger.warning(f"⚠️ CoinGecko fetch failed: {e}")
 
-    # Return realistic mock data as fallback
-    base_price = 3.45 + np.random.uniform(-0.05, 0.05)
+    # Return realistic mock data as fallback (Feb 2026 prices)
+    base_price = 3.25 + np.random.uniform(-0.03, 0.03)
     return {
         "near": {
             "usd": round(base_price, 6),
-            "usd_24h_change": round(np.random.uniform(-3.0, 3.0), 4),
-            "usd_24h_vol": round(np.random.uniform(150_000_000, 300_000_000), 2),
-            "usd_market_cap": round(base_price * 1_200_000_000, 2),
+            "usd_24h_change": round(np.random.uniform(-2.5, 2.5), 4),
+            "usd_24h_vol": round(np.random.uniform(180_000_000, 350_000_000), 2),
+            "usd_market_cap": round(base_price * 1_180_000_000, 2),
         },
         "timestamp": datetime.now().isoformat(),
         "source": "mock",
@@ -785,14 +785,14 @@ async def get_aurora_price():
     except Exception as e:
         logger.warning(f"⚠️ CoinGecko Aurora fetch failed: {e}")
 
-    # Return realistic mock data as fallback
-    base_price = 0.22 + np.random.uniform(-0.01, 0.01)
+    # Return realistic mock data as fallback (Feb 2026 prices)
+    base_price = 0.185 + np.random.uniform(-0.005, 0.005)
     return {
         "aurora": {
             "usd": round(base_price, 6),
-            "usd_24h_change": round(np.random.uniform(-5.0, 5.0), 4),
-            "usd_24h_vol": round(np.random.uniform(5_000_000, 20_000_000), 2),
-            "usd_market_cap": round(base_price * 300_000_000, 2),
+            "usd_24h_change": round(np.random.uniform(-3.5, 3.5), 4),
+            "usd_24h_vol": round(np.random.uniform(8_000_000, 25_000_000), 2),
+            "usd_market_cap": round(base_price * 280_000_000, 2),
         },
         "timestamp": datetime.now().isoformat(),
         "source": "mock",
@@ -803,37 +803,37 @@ async def get_aurora_price():
 # Generic Token Price Endpoint (ETH, SOL, ALGO, etc.)
 # =============================================================================
 
-# CoinGecko ID mapping and mock price defaults
+# CoinGecko ID mapping and mock price defaults (Feb 2026 realistic prices)
 TOKEN_CONFIG = {
     "near": {
         "coingecko_id": "near",
-        "mock_price": 3.45,
-        "mock_mcap_mult": 1_200_000_000,
-        "mock_vol_range": (150_000_000, 300_000_000),
+        "mock_price": 3.25,
+        "mock_mcap_mult": 1_180_000_000,
+        "mock_vol_range": (180_000_000, 350_000_000),
     },
     "aurora": {
         "coingecko_id": "aurora-near",
-        "mock_price": 0.22,
-        "mock_mcap_mult": 300_000_000,
-        "mock_vol_range": (5_000_000, 20_000_000),
+        "mock_price": 0.185,
+        "mock_mcap_mult": 280_000_000,
+        "mock_vol_range": (8_000_000, 25_000_000),
     },
     "ethereum": {
         "coingecko_id": "ethereum",
-        "mock_price": 2450.0,
-        "mock_mcap_mult": 120_000_000,
-        "mock_vol_range": (8_000_000_000, 15_000_000_000),
+        "mock_price": 2680.0,
+        "mock_mcap_mult": 125_000_000,
+        "mock_vol_range": (10_000_000_000, 18_000_000_000),
     },
     "solana": {
         "coingecko_id": "solana",
-        "mock_price": 135.0,
-        "mock_mcap_mult": 4_000_000,
-        "mock_vol_range": (1_500_000_000, 3_000_000_000),
+        "mock_price": 198.0,
+        "mock_mcap_mult": 4_200_000,
+        "mock_vol_range": (2_000_000_000, 4_000_000_000),
     },
     "algorand": {
         "coingecko_id": "algorand",
-        "mock_price": 0.21,
-        "mock_mcap_mult": 8_000_000_000,
-        "mock_vol_range": (30_000_000, 80_000_000),
+        "mock_price": 0.245,
+        "mock_mcap_mult": 7_500_000_000,
+        "mock_vol_range": (35_000_000, 90_000_000),
     },
 }
 
