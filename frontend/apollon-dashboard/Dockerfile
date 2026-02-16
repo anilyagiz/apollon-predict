@@ -1,21 +1,16 @@
-# Frontend Dockerfile
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
 COPY . .
-
-# Build the app - output goes to .next by default
 RUN npm run build
 
-# Expose port
+RUN cp -r public .next/standalone/ 2>/dev/null || true
+RUN cp -r .next/static .next/standalone/.next/ 2>/dev/null || true
+
 EXPOSE 3000
 
-# Start production server
-CMD ["node_modules/next/dist/bin/next", "start"]
+CMD ["node", ".next/standalone/server.js"]
