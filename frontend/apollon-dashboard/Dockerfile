@@ -11,8 +11,11 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Build the app - output goes to .next by default
+RUN npm run build
+
 # Expose port
 EXPOSE 3000
 
-# Start in dev mode, bind to 0.0.0.0 so Docker port forwarding works
-CMD ["npx", "next", "dev", "--turbopack", "--hostname", "0.0.0.0"]
+# Start production server
+CMD ["node_modules/next/dist/bin/next", "start"]
