@@ -1,6 +1,7 @@
 {
-  "buildCommand": "cd frontend/apollon-dashboard && npm run build",
-  "outputDirectory": "frontend/apollon-dashboard/.next",
-  "installCommand": "cd frontend/apollon-dashboard && npm install",
-  "framework": "nextjs"
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "rootDirectory": "frontend/apollon-dashboard"
 }
