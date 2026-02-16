@@ -1,0 +1,13 @@
+{
+  "name": "apollon-monorepo",
+  "private": true,
+  "workspaces": [
+    "sdk/typescript",
+    "frontend/apollon-dashboard"
+  ],
+  "scripts": {
+    "build:sdk": "cd sdk/typescript && npm run build",
+    "build:frontend": "cd frontend/apollon-dashboard && npm run build",
+    "build": "npm run build:sdk && npm run build:frontend"
+  }
+}
