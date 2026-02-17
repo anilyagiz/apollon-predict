@@ -18,14 +18,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "apollon-publisher"
+name = "apollon-agent"
 version = "0.1.0"
 dependencies = [
  "borsh",
  "near-sdk",
  "serde",
  "serde_json",
- "wee_alloc",
 ]
 
 [[package]]
